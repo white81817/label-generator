@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>標籤貼紙產生器</title>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dom-to-image/2.6.0/dom-to-image.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            .label-container { margin: 0 !important; padding: 0 !important; }
+        }
+
+        .label-box {
+            width: 226px;  /* 60mm */
+            height: 151px; /* 40mm */
+            break-inside: avoid;
+            page-break-inside: avoid;
+            margin: 0;
+            padding: 0;
+        }
+
+        .custom-file-input::-webkit-file-upload-button {
+            visibility: hidden;
+            width: 0;
+        }
+
+        .custom-file-input::before {
+            content: '選擇CSV檔案';
+            display: inline-block;
+            background: linear-gradient(to bottom, #ffffff 0%, #f3f3f3 100%);
+            border: 1px solid #999;
+            border-radius: 3px;
+            padding: 8px 12px;
+            outline: none;
+            white-space: nowrap;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 10pt;
+        }
+
+        .custom-file-input:hover::before {
+            border-color: black;
+        }
+
+        .preview-container {
+            width: 226px;
+            margin: 0 auto;
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- 標題區 -->
+        <div class="text-center mb-8 no-print">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">標籤貼紙產生器</h1>
+            <p class="text-gray-600">標籤尺寸：60mm x 40mm</p>
+        </div>
+
+        <!-- 主要操作區 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 no-print">
+            <!-- 左側：單筆輸入 -->
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-semibold mb-4 text-gray-700">手動標籤產生</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">商品名稱</label>
+                        <input type="text" id="productName" 
+                               class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                               placeholder="請輸入商品名稱">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">商品編號</label>
+                        <input type="text" id="productId" 
+                               class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                               placeholder="請輸入商品編號">
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="addLabel()" 
+                                class="flex-1 bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-200">
+                            新增標籤
+                        </button>
+                        <button onclick="clearLabels()" 
+                                class="bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition duration-200">
+                            清除全部
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右側：CSV匯入 -->
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-semibold mb-4 text-gray-700">批次匯入</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">CSV檔案匯入</label>
+                        <input type="file" id="csvFile" accept=".csv,.xlsx,.xls" 
+                               class="custom-file-input w-full mb-4">
+                        <p class="text-sm text-gray-500 mt-1">支援格式：CSV 或 Excel (商品名稱,商品編號)</p>
+                        <div class="flex items-center space-x-2 mt-2">
+                            <button onclick="downloadExampleFile()" 
+                                    class="text-blue-500 hover:text-blue-700 text-sm flex items-center">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                </svg>
+                                下載範例檔案
+                            </button>
+                        </div>
+                    </div>
+                    <button onclick="processFile()" 
+                            class="w-full bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition duration-200">
+                        批次產生標籤
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 預覽和輸出區 -->
+        <div class="mt-8">
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <div class="flex justify-between items-center mb-4 no-print">
+                    <h2 class="text-xl font-semibold text-gray-700">標籤預覽</h2>
+                    <button onclick="exportPDF()" 
+                            class="bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition duration-200">
+                        匯出PDF
+                    </button>
+                </div>
+                <div id="labelContainer" class="grid gap-4 justify-items-center"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const LABEL_WIDTH = 60;  // mm
+        const LABEL_HEIGHT = 40; // mm
+
+        function createLabelElement(name, id) {
+            const box = document.createElement("div");
+            box.className = "label-box bg-white rounded border print-only";
+            box.style.position = "relative";
+            box.style.padding = "3mm";
+            box.style.boxSizing = "border-box";
+            box.style.backgroundColor = "white";
+            box.style.height = "151px"; /* 40mm */
+            box.style.width = "226px";  /* 60mm */
+            box.style.overflow = "hidden";
+            box.style.fontSmooth = "always";
+            box.style.webkitFontSmoothing = "antialiased";
+            box.style.mozOsxFontSmoothing = "grayscale";
+
+            // 商品名稱區域
+            const nameContainer = document.createElement("div");
+            nameContainer.style.position = "absolute";
+            nameContainer.style.top = "3mm";
+            nameContainer.style.left = "3mm";
+            nameContainer.style.right = "3mm";
+            nameContainer.style.height = "14mm";
+            nameContainer.style.display = "flex";
+            nameContainer.style.alignItems = "center";
+            nameContainer.style.justifyContent = "center";
+            nameContainer.style.backgroundColor = "transparent";
+            nameContainer.style.fontSmooth = "always";
+            nameContainer.style.webkitFontSmoothing = "antialiased";
+            nameContainer.style.mozOsxFontSmoothing = "grayscale";
+
+            const nameDiv = document.createElement("div");
+            nameDiv.className = "text-center font-bold";
+            nameDiv.style.width = "100%";
+            nameDiv.style.fontSize = "20px";
+            nameDiv.style.lineHeight = "1.2";
+            nameDiv.style.wordBreak = "break-all";
+            nameDiv.style.wordWrap = "break-word";
+            nameDiv.style.whiteSpace = "pre-wrap";
+            nameDiv.style.display = "-webkit-box";
+            nameDiv.style.webkitLineClamp = "2";
+            nameDiv.style.webkitBoxOrient = "vertical";
+            nameDiv.style.overflow = "hidden";
+            nameDiv.style.backgroundColor = "transparent";
+            nameDiv.style.fontSmooth = "always";
+            nameDiv.style.webkitFontSmoothing = "antialiased";
+            nameDiv.style.mozOsxFontSmoothing = "grayscale";
+            nameDiv.innerText = name;
+
+            nameContainer.appendChild(nameDiv);
+
+            // 條碼容器
+            const barcodeContainer = document.createElement("div");
+            barcodeContainer.style.position = "absolute";
+            barcodeContainer.style.bottom = "3mm";
+            barcodeContainer.style.left = "3mm";
+            barcodeContainer.style.right = "3mm";
+            barcodeContainer.style.height = "auto";
+            barcodeContainer.style.display = "flex";
+            barcodeContainer.style.justifyContent = "center";
+            barcodeContainer.style.alignItems = "flex-end";
+            barcodeContainer.style.backgroundColor = "transparent";
+            barcodeContainer.style.marginTop = "1mm";
+
+            // 條碼外層容器
+            const barcodeWrapper = document.createElement("div");
+            barcodeWrapper.style.width = "90%";
+            barcodeWrapper.style.display = "flex";
+            barcodeWrapper.style.justifyContent = "center";
+            barcodeWrapper.style.alignItems = "center";
+            barcodeWrapper.style.overflow = "hidden";
+            barcodeWrapper.style.backgroundColor = "transparent";
+
+            // 條碼
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svg.setAttribute("jsbarcode-format", "CODE128");
+            svg.setAttribute("jsbarcode-value", id);
+            svg.setAttribute("jsbarcode-height", "45");
+            svg.setAttribute("jsbarcode-width", "1.5");
+            svg.setAttribute("jsbarcode-displayValue", "true");
+            svg.setAttribute("jsbarcode-margin", "0");
+            svg.setAttribute("jsbarcode-textMargin", "2");
+            svg.setAttribute("jsbarcode-fontSize", "12");
+            svg.style.width = "100%";
+            svg.style.height = "auto";
+            svg.style.display = "block";
+            svg.style.shapeRendering = "crispEdges";
+
+            barcodeWrapper.appendChild(svg);
+            barcodeContainer.appendChild(barcodeWrapper);
+            box.appendChild(nameContainer);
+            box.appendChild(barcodeContainer);
+
+            // 設定 SVG 背景為透明
+            setTimeout(() => {
+                const svgElement = box.querySelector('svg');
+                if (svgElement) {
+                    const rects = svgElement.getElementsByTagName('rect');
+                    for (let rect of rects) {
+                        if (rect.getAttribute('fill') === '#FFFFFF') {
+                            rect.setAttribute('fill', 'transparent');
+                        }
+                    }
+                    svgElement.style.shapeRendering = "crispEdges";
+                }
+            }, 100);
+
+            return { box, svg };
+        }
+
+        function addLabel() {
+            const name = document.getElementById("productName").value.trim();
+            const id = document.getElementById("productId").value.trim();
+
+            if (!name || !id) {
+                alert("請輸入商品名稱和編號！");
+                return;
+            }
+
+            if (name.length > 50) {
+                alert("商品名稱過長！最多支援50個字元。");
+                return;
+            }
+
+            const { box, svg } = createLabelElement(name, id);
+            document.getElementById("labelContainer").appendChild(box);
+            JsBarcode(svg).init();
+
+            // 清空輸入欄位
+            document.getElementById("productName").value = "";
+            document.getElementById("productId").value = "";
+            // 聚焦回商品名稱輸入框
+            document.getElementById("productName").focus();
+        }
+
+        function clearLabels() {
+            if (document.getElementById("labelContainer").children.length > 0) {
+                if (confirm("確定要清除所有標籤嗎？")) {
+                    document.getElementById("labelContainer").innerHTML = "";
+                }
+            }
+        }
+
+        // 添加鍵盤事件支援
+        document.getElementById("productName").addEventListener("keypress", function(e) {
+            if (e.key === "Enter") {
+                document.getElementById("productId").focus();
+            }
+        });
+
+        document.getElementById("productId").addEventListener("keypress", function(e) {
+            if (e.key === "Enter") {
+                addLabel();
+            }
+        });
+
+        async function processFile() {
+            const file = document.getElementById("csvFile").files[0];
+            if (!file) {
+                alert("請選擇檔案！");
+                return;
+            }
+
+            try {
+                let rows = [];
+                if (file.name.toLowerCase().endsWith('.csv')) {
+                    // 處理 CSV 檔案
+                    const text = await file.text();
+                    rows = text.split('\n')
+                        .map(row => row.trim())
+                        .filter(row => row)
+                        .map(row => {
+                            const columns = row.split(',');
+                            return [columns[0], columns[1]]; // 只取前兩列
+                        })
+                        .filter(row => row[0] && row[1]); // 確保兩個欄位都有值
+                } else if (file.name.toLowerCase().endsWith('.xlsx') || file.name.toLowerCase().endsWith('.xls')) {
+                    // 處理 Excel 檔案
+                    const data = await file.arrayBuffer();
+                    const workbook = XLSX.read(data);
+                    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                    
+                    // 過濾並處理數據
+                    rows = jsonData
+                        .filter(row => Array.isArray(row) && row.length >= 2 && row[0] && row[1]) // 確保有效的行
+                        .map(row => [String(row[0]).trim(), String(row[1]).trim()]); // 轉換為字串並清理
+                } else {
+                    throw new Error("不支援的檔案格式。請使用 CSV 或 Excel 檔案。");
+                }
+
+                // 移除標題行（如果存在）
+                if (rows.length > 0 && 
+                    (rows[0][0].includes("商品名稱") || rows[0][0].includes("品名") || 
+                     rows[0][1].includes("商品編號") || rows[0][1].includes("編號"))) {
+                    rows.shift();
+                }
+
+                if (rows.length === 0) {
+                    throw new Error("檔案中沒有有效的資料。請確認檔案格式是否正確。");
+                }
+
+                document.getElementById("labelContainer").innerHTML = "";
+                
+                let errorMessages = [];
+                for (const [name, id] of rows) {
+                    try {
+                        const trimmedName = String(name).trim();
+                        const trimmedId = String(id).trim();
+                        
+                        if (!trimmedName || !trimmedId) {
+                            errorMessages.push(`跳過空白資料：${name} - ${id}`);
+                            continue;
+                        }
+                        
+                        if (trimmedName.length > 50) {
+                            errorMessages.push(`警告：商品名稱 "${trimmedName}" 過長（超過50字），已被跳過。`);
+                            continue;
+                        }
+                        
+                        const { box, svg } = createLabelElement(trimmedName, trimmedId);
+                        document.getElementById("labelContainer").appendChild(box);
+                        JsBarcode(svg).init();
+                    } catch (err) {
+                        errorMessages.push(`處理資料時發生錯誤：${name} - ${id}，錯誤訊息：${err.message}`);
+                    }
+                }
+
+                if (errorMessages.length > 0) {
+                    alert("處理完成，但有以下警告：\n\n" + errorMessages.join("\n"));
+                }
+
+            } catch (error) {
+                console.error("檔案處理錯誤：", error);
+                alert("檔案處理失敗：" + (error.message || "請確認檔案格式是否正確，並且包含商品名稱和編號兩個欄位。"));
+            }
+        }
+
+        function downloadExampleFile() {
+            // 創建工作簿
+            const wb = XLSX.utils.book_new();
+            
+            // 準備示例數據
+            const exampleData = [
+                ["商品名稱", "商品編號"],
+                ["測試商品A", "TEST001"],
+                ["測試商品B", "TEST002"],
+                ["商品名稱可以很長很長很長", "TEST003"],
+                ["商品名稱可以換行的說明文字", "TEST004"]
+            ];
+            
+            // 創建工作表
+            const ws = XLSX.utils.aoa_to_sheet(exampleData);
+            
+            // 設定欄寬
+            const wscols = [
+                {wch: 30},  // 商品名稱欄寬
+                {wch: 15}   // 商品編號欄寬
+            ];
+            ws['!cols'] = wscols;
+            
+            // 將工作表加入工作簿
+            XLSX.utils.book_append_sheet(wb, ws, "標籤範例");
+            
+            // 下載檔案
+            XLSX.writeFile(wb, "標籤範例.xlsx");
+        }
+
+        async function exportPDF() {
+            const container = document.getElementById("labelContainer");
+            if (!container.firstChild) {
+                alert("請先產生標籤！");
+                return;
+            }
+
+            try {
+                const element = container.firstChild;
+                // 確保元素樣式正確
+                element.style.margin = "0";
+                element.style.border = "none";
+                element.style.backgroundColor = "white";
+
+                // 使用 dom-to-image 生成高解析度圖片
+                const scale = 3;  // 提高解析度
+                const width = Math.floor(226 * scale);
+                const height = Math.floor(151 * scale);
+
+                const dataUrl = await domtoimage.toPng(element, {
+                    width: width,
+                    height: height,
+                    style: {
+                        margin: '0',
+                        padding: '3mm',
+                        transform: `scale(${scale})`,
+                        'transform-origin': 'top left',
+                        '-webkit-transform-origin': 'top left'
+                    },
+                    quality: 1.0,
+                    height: height,
+                    width: width
+                });
+
+                // 創建一個新的 Image 對象來獲取實際的圖片尺寸
+                const img = new Image();
+                img.src = dataUrl;
+                await new Promise((resolve) => {
+                    img.onload = resolve;
+                });
+
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({
+                    orientation: 'landscape',
+                    unit: 'mm',
+                    format: [LABEL_WIDTH, LABEL_HEIGHT],
+                    hotfixes: ["px_scaling"]
+                });
+
+                // 計算縮放比例以填滿頁面
+                const pdfWidth = LABEL_WIDTH;
+                const pdfHeight = LABEL_HEIGHT;
+
+                pdf.addImage(
+                    dataUrl,
+                    'PNG',
+                    0,
+                    0,
+                    pdfWidth,
+                    pdfHeight,
+                    undefined,
+                    'NONE'
+                );
+
+                pdf.save('labels.pdf');
+
+            } catch (error) {
+                alert("PDF產生失敗：" + error.message);
+                console.error(error);
+            }
+        }
+    </script>
+</body>
+</html> 

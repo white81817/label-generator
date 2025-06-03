@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>標籤貼紙產生器</title>
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    body { 
+      font-family: sans-serif; 
+      padding: 2em; 
+    }
+    .input-row { 
+      margin-bottom: 1em; 
+    }
+    label { 
+      display: inline-block; 
+      width: 120px; 
+    }
+    input {
+      padding: 5px;
+      width: 200px;
+    }
+    button {
+      padding: 8px 15px;
+      margin-right: 10px;
+      cursor: pointer;
+    }
+    .preview { 
+      margin-top: 2em; 
+      border: 1px solid #ccc; 
+      padding: 1em; 
+      display: inline-block;
+      background: #f9f9f9;
+    }
+    .label-box { 
+      text-align: center; 
+      page-break-after: always; 
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      margin: 5mm;
+      padding: 2mm;
+      box-sizing: border-box;
+      border: 1px dashed #ccc;
+      background: white;
+    }
+    @media print {
+      .label-box {
+        margin: 0;
+        padding: 0;
+        border: none;
+      }
+    }
+    .label-name { 
+      font-weight: bold; 
+      margin-bottom: 0.5em;
+      font-size: 1.2em;
+      width: 100%;
+    }
+    .barcode-container {
+      width: 85%;
+      margin: 0.5em 0;
+    }
+    .label-id { 
+      margin-top: 0.5em; 
+      font-size: 0.9em;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <h1>標籤貼紙產生器</h1>
+  <div class="input-row">
+    <label>商品名稱：</label>
+    <input id="productName" type="text" placeholder="請輸入商品名稱" />
+  </div>
+  <div class="input-row">
+    <label>商品編號：</label>
+    <input id="productId" type="text" placeholder="請輸入商品編號" />
+  </div>
+  <div class="input-row">
+    <label>標籤寬度 (mm)：</label>
+    <input id="labelWidth" type="number" value="60" min="30" />
+  </div>
+  <div class="input-row">
+    <label>標籤高度 (mm)：</label>
+    <input id="labelHeight" type="number" value="30" min="20" />
+  </div>
+  <button onclick="addLabel()">新增標籤</button>
+  <button onclick="exportPDF()">匯出 PDF</button>
+
+  <div id="labelContainer" class="preview"></div>
+
+  <script>
+    function mmToPx(mm) {
+      return mm * 3.7795275591;
+    }
+
+    function addLabel() {
+      const name = document.getElementById("productName").value;
+      const id = document.getElementById("productId").value;
+      const width = mmToPx(document.getElementById("labelWidth").value);
+      const height = mmToPx(document.getElementById("labelHeight").value);
+
+      if (!name || !id) {
+        alert("請輸入商品名稱和編號！");
+        return;
+      }
+
+      // 清除之前的標籤
+      document.getElementById("labelContainer").innerHTML = "";
+
+      const box = document.createElement("div");
+      box.className = "label-box";
+      box.style.width = width + "px";
+      box.style.height = height + "px";
+
+      const nameDiv = document.createElement("div");
+      nameDiv.className = "label-name";
+      nameDiv.innerText = name;
+
+      const barcodeContainer = document.createElement("div");
+      barcodeContainer.className = "barcode-container";
+
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("jsbarcode-format", "CODE128");
+      svg.setAttribute("jsbarcode-value", id);
+      svg.setAttribute("jsbarcode-height", height * 0.4);
+      svg.setAttribute("jsbarcode-width", "2");
+      svg.setAttribute("jsbarcode-displayValue", "false");
+      svg.style.width = "100%";
+
+      const idDiv = document.createElement("div");
+      idDiv.className = "label-id";
+      idDiv.innerText = id;
+
+      barcodeContainer.appendChild(svg);
+      box.appendChild(nameDiv);
+      box.appendChild(barcodeContainer);
+      box.appendChild(idDiv);
+
+      document.getElementById("labelContainer").appendChild(box);
+      JsBarcode(svg).init();
+    }
+
+    function exportPDF() {
+      const element = document.getElementById("labelContainer");
+      if (!element.firstChild) {
+        alert("請先新增標籤！");
+        return;
+      }
+
+      const width = document.getElementById("labelWidth").value;
+      const height = document.getElementById("labelHeight").value;
+      
+      const opt = {
+        margin: 0,
+        filename: 'label.pdf',
+        image: { type: 'jpeg', quality: 1 },
+        html2canvas: { 
+          scale: 2,
+          useCORS: true,
+          letterRendering: true
+        },
+        jsPDF: { 
+          unit: 'mm', 
+          format: [width, height],
+          orientation: 'portrait',
+          precision: 16
+        }
+      };
+
+      html2pdf().from(element).set(opt).save();
+    }
+  </script>
+</body>
+</html>
