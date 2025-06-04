@@ -14,6 +14,7 @@
             .no-print { display: none !important; }
             .print-only { display: block !important; }
             .label-container { margin: 0 !important; padding: 0 !important; }
+            button { display: none !important; }
         }
 
         .label-box {
@@ -146,7 +147,7 @@
 
         function createLabelElement(name, id) {
             const box = document.createElement("div");
-            box.className = "label-box bg-white rounded border print-only";
+            box.className = "label-box bg-white rounded border print-only relative";
             box.style.position = "relative";
             box.style.padding = "3mm";
             box.style.boxSizing = "border-box";
@@ -157,6 +158,19 @@
             box.style.fontSmooth = "always";
             box.style.webkitFontSmoothing = "antialiased";
             box.style.mozOsxFontSmoothing = "grayscale";
+
+            // 刪除按鈕
+            const deleteButton = document.createElement("button");
+            deleteButton.className = "absolute top-0 right-0 bg-red-500 text-white rounded-bl px-2 py-1 text-sm no-print hover:bg-red-600 focus:outline-none";
+            deleteButton.innerHTML = "×";
+            deleteButton.style.zIndex = "10";
+            deleteButton.onclick = function(e) {
+                e.preventDefault();
+                if (confirm("確定要刪除這個標籤嗎？")) {
+                    box.remove();
+                }
+            };
+            box.appendChild(deleteButton);
 
             // 商品名稱區域
             const nameContainer = document.createElement("div");
