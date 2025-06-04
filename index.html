@@ -176,7 +176,21 @@
             const nameDiv = document.createElement("div");
             nameDiv.className = "text-center font-bold";
             nameDiv.style.width = "100%";
-            nameDiv.style.fontSize = "18px";
+            
+            // 根據文字長度動態調整字體大小
+            const textLength = name.length;
+            let fontSize = 18;
+            if (textLength > 20) {
+                fontSize = 16;
+            }
+            if (textLength > 30) {
+                fontSize = 14;
+            }
+            if (textLength > 40) {
+                fontSize = 12;
+            }
+            nameDiv.style.fontSize = `${fontSize}px`;
+            
             nameDiv.style.lineHeight = "1.2";
             nameDiv.style.wordBreak = "break-all";
             nameDiv.style.wordWrap = "break-word";
