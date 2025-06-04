@@ -176,7 +176,7 @@
             const nameDiv = document.createElement("div");
             nameDiv.className = "text-center font-bold";
             nameDiv.style.width = "100%";
-            nameDiv.style.fontSize = "20px";
+            nameDiv.style.fontSize = "18px";
             nameDiv.style.lineHeight = "1.2";
             nameDiv.style.wordBreak = "break-all";
             nameDiv.style.wordWrap = "break-word";
@@ -270,9 +270,6 @@
             document.getElementById("labelContainer").appendChild(box);
             JsBarcode(svg).init();
 
-            // 清空輸入欄位
-            document.getElementById("productName").value = "";
-            document.getElementById("productId").value = "";
             // 聚焦回商品名稱輸入框
             document.getElementById("productName").focus();
         }
@@ -418,39 +415,6 @@
             }
 
             try {
-                const element = container.firstChild;
-                // 確保元素樣式正確
-                element.style.margin = "0";
-                element.style.border = "none";
-                element.style.backgroundColor = "white";
-
-                // 使用 dom-to-image 生成高解析度圖片
-                const scale = 3;  // 提高解析度
-                const width = Math.floor(226 * scale);
-                const height = Math.floor(151 * scale);
-
-                const dataUrl = await domtoimage.toPng(element, {
-                    width: width,
-                    height: height,
-                    style: {
-                        margin: '0',
-                        padding: '3mm',
-                        transform: `scale(${scale})`,
-                        'transform-origin': 'top left',
-                        '-webkit-transform-origin': 'top left'
-                    },
-                    quality: 1.0,
-                    height: height,
-                    width: width
-                });
-
-                // 創建一個新的 Image 對象來獲取實際的圖片尺寸
-                const img = new Image();
-                img.src = dataUrl;
-                await new Promise((resolve) => {
-                    img.onload = resolve;
-                });
-
                 const { jsPDF } = window.jspdf;
                 const pdf = new jsPDF({
                     orientation: 'landscape',
@@ -459,20 +423,53 @@
                     hotfixes: ["px_scaling"]
                 });
 
-                // 計算縮放比例以填滿頁面
-                const pdfWidth = LABEL_WIDTH;
-                const pdfHeight = LABEL_HEIGHT;
+                const scale = 3;  // 提高解析度
+                const width = Math.floor(226 * scale);
+                const height = Math.floor(151 * scale);
 
-                pdf.addImage(
-                    dataUrl,
-                    'PNG',
-                    0,
-                    0,
-                    pdfWidth,
-                    pdfHeight,
-                    undefined,
-                    'NONE'
-                );
+                // 處理所有標籤
+                const labels = Array.from(container.children);
+                for (let i = 0; i < labels.length; i++) {
+                    const label = labels[i];
+                    
+                    // 確保元素樣式正確
+                    label.style.margin = "0";
+                    label.style.border = "none";
+                    label.style.backgroundColor = "white";
+
+                    // 生成高解析度圖片
+                    const dataUrl = await domtoimage.toPng(label, {
+                        width: width,
+                        height: height,
+                        style: {
+                            margin: '0',
+                            padding: '3mm',
+                            transform: `scale(${scale})`,
+                            'transform-origin': 'top left',
+                            '-webkit-transform-origin': 'top left'
+                        },
+                        quality: 1.0,
+                        height: height,
+                        width: width
+                    });
+
+                    // 如果不是第一頁，添加新頁面
+                    if (i > 0) {
+                        pdf.addPage([LABEL_WIDTH, LABEL_HEIGHT], 'landscape');
+                    }
+
+                    // 添加圖片到 PDF
+                    pdf.addImage(
+                        dataUrl,
+                        'PNG',
+                        0,
+                        0,
+                        LABEL_WIDTH,
+                        LABEL_HEIGHT,
+                        undefined,
+                        'NONE'
+                    );
+                }
 
                 pdf.save('labels.pdf');
 
