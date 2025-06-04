@@ -15,6 +15,7 @@
             .print-only { display: block !important; }
             .label-container { margin: 0 !important; padding: 0 !important; }
             button { display: none !important; }
+            .delete-btn { display: none !important; }
         }
 
         .label-box {
@@ -56,6 +57,24 @@
             padding: 10px;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .delete-btn {
+            position: absolute !important;
+            top: 0 !important;
+            right: 0 !important;
+            background-color: #ef4444 !important;
+            color: white !important;
+            border-radius: 0 0 0 0.25rem !important;
+            padding: 0.25rem 0.5rem !important;
+            font-size: 0.875rem !important;
+            line-height: 1 !important;
+            z-index: 10 !important;
+            cursor: pointer !important;
+        }
+
+        .delete-btn:hover {
+            background-color: #dc2626 !important;
         }
     </style>
 </head>
@@ -161,9 +180,8 @@
 
             // 刪除按鈕
             const deleteButton = document.createElement("button");
-            deleteButton.className = "absolute top-0 right-0 bg-red-500 text-white rounded-bl px-2 py-1 text-sm no-print hover:bg-red-600 focus:outline-none";
+            deleteButton.className = "delete-btn no-print";
             deleteButton.innerHTML = "×";
-            deleteButton.style.zIndex = "10";
             deleteButton.onclick = function(e) {
                 e.preventDefault();
                 if (confirm("確定要刪除這個標籤嗎？")) {
