@@ -158,7 +158,7 @@
 
         function createLabelElement(name, id) {
             const box = document.createElement("div");
-            box.className = "label-box bg-white rounded border print-only";
+            box.className = "label-box bg-white rounded border print-only relative";
             box.style.position = "relative";
             box.style.padding = "3mm";
             box.style.boxSizing = "border-box";
@@ -169,6 +169,19 @@
             box.style.fontSmooth = "always";
             box.style.webkitFontSmoothing = "antialiased";
             box.style.mozOsxFontSmoothing = "grayscale";
+
+            // 添加刪除按鈕
+            const deleteButton = document.createElement("button");
+            deleteButton.className = "absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm no-print hover:bg-red-600 focus:outline-none";
+            deleteButton.innerHTML = "×";
+            deleteButton.style.zIndex = "10";
+            deleteButton.onclick = function(e) {
+                e.stopPropagation();
+                if (confirm("確定要刪除這個標籤嗎？")) {
+                    box.remove();
+                }
+            };
+            box.appendChild(deleteButton);
 
             // 商品名稱區域
             const nameContainer = document.createElement("div");
@@ -472,6 +485,12 @@
                 for (let i = 0; i < labels.length; i++) {
                     const label = labels[i];
                     
+                    // 暫時隱藏刪除按鈕
+                    const deleteButton = label.querySelector('button');
+                    if (deleteButton) {
+                        deleteButton.style.display = 'none';
+                    }
+
                     // 確保元素樣式正確
                     label.style.margin = "0";
                     label.style.border = "none";
@@ -479,19 +498,24 @@
 
                     // 生成高解析度圖片
                     const dataUrl = await domtoimage.toPng(label, {
-                    width: width,
-                    height: height,
-                    style: {
-                        margin: '0',
-                        padding: '3mm',
-                        transform: `scale(${scale})`,
-                        'transform-origin': 'top left',
-                        '-webkit-transform-origin': 'top left'
-                    },
-                    quality: 1.0,
-                    height: height,
-                    width: width
-                });
+                        width: width,
+                        height: height,
+                        style: {
+                            margin: '0',
+                            padding: '3mm',
+                            transform: `scale(${scale})`,
+                            'transform-origin': 'top left',
+                            '-webkit-transform-origin': 'top left'
+                        },
+                        quality: 1.0,
+                        height: height,
+                        width: width
+                    });
+
+                    // 恢復刪除按鈕顯示
+                    if (deleteButton) {
+                        deleteButton.style.display = '';
+                    }
 
                     // 如果不是第一頁，添加新頁面
                     if (i > 0) {
@@ -499,16 +523,16 @@
                     }
 
                     // 添加圖片到 PDF
-                pdf.addImage(
-                    dataUrl,
-                    'PNG',
-                    0,
-                    0,
+                    pdf.addImage(
+                        dataUrl,
+                        'PNG',
+                        0,
+                        0,
                         LABEL_WIDTH,
                         LABEL_HEIGHT,
-                    undefined,
-                    'NONE'
-                );
+                        undefined,
+                        'NONE'
+                    );
                 }
 
                 pdf.save('labels.pdf');
@@ -518,6 +542,17 @@
                 console.error(error);
             }
         }
+
+        // 添加列印樣式，確保刪除按鈕不會出現在列印結果中
+        const style = document.createElement('style');
+        style.textContent = `
+            @media print {
+                .no-print { 
+                    display: none !important; 
+                }
+            }
+        `;
+        document.head.appendChild(style);
 
         // 讀取 URL 參數並自動生成標籤
         function loadFromURL() {
