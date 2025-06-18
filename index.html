@@ -8,6 +8,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dom-to-image/2.6.0/dom-to-image.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lz-string@1.4.4/libs/lz-string.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
         @media print {
@@ -554,29 +555,6 @@
         `;
         document.head.appendChild(style);
 
-        // 讀取 URL 參數並自動生成標籤
-        function loadFromURL() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const labelData = urlParams.get('data');
-            if (labelData) {
-                try {
-                    const decodedData = JSON.parse(decodeURIComponent(labelData));
-                    if (Array.isArray(decodedData)) {
-                        document.getElementById("labelContainer").innerHTML = "";
-                        decodedData.forEach(item => {
-                            if (item.name && item.id) {
-                                const { box, svg } = createLabelElement(item.name, item.id);
-                                document.getElementById("labelContainer").appendChild(box);
-                                JsBarcode(svg).init();
-                            }
-                        });
-                    }
-                } catch (error) {
-                    console.error('無法解析 URL 參數:', error);
-                }
-            }
-        }
-
         // 生成分享連結
         function generateShareLink() {
             const container = document.getElementById("labelContainer");
@@ -592,18 +570,67 @@
                 };
             });
 
-            const data = encodeURIComponent(JSON.stringify(labels));
-            const url = `${window.location.origin}${window.location.pathname}?data=${data}`;
-            
-            // 創建臨時輸入框來複製連結
-            const tempInput = document.createElement("input");
-            tempInput.value = url;
-            document.body.appendChild(tempInput);
-            tempInput.select();
-            document.execCommand("copy");
-            document.body.removeChild(tempInput);
-            
-            alert("分享連結已複製到剪貼簿！");
+            try {
+                // 使用 LZ-string 壓縮資料
+                const compressedData = LZString.compressToEncodedURIComponent(JSON.stringify(labels));
+                const shortUrl = `${window.location.origin}${window.location.pathname}?d=${compressedData}`;
+                
+                // 創建臨時輸入框來複製連結
+                const tempInput = document.createElement("input");
+                tempInput.value = shortUrl;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand("copy");
+                document.body.removeChild(tempInput);
+                
+                alert("壓縮後的分享連結已複製到剪貼簿！");
+            } catch (error) {
+                console.error('壓縮網址失敗:', error);
+                alert("無法產生壓縮連結，請稍後再試！");
+            }
+        }
+
+        // 讀取 URL 參數並自動生成標籤
+        function loadFromURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const compressedData = urlParams.get('d');
+            const oldData = urlParams.get('data'); // 支援舊格式
+
+            if (compressedData) {
+                try {
+                    // 解壓縮資料
+                    const decodedData = JSON.parse(LZString.decompressFromEncodedURIComponent(compressedData));
+                    if (Array.isArray(decodedData)) {
+                        document.getElementById("labelContainer").innerHTML = "";
+                        decodedData.forEach(item => {
+                            if (item.name && item.id) {
+                                const { box, svg } = createLabelElement(item.name, item.id);
+                                document.getElementById("labelContainer").appendChild(box);
+                                JsBarcode(svg).init();
+                            }
+                        });
+                    }
+                } catch (error) {
+                    console.error('無法解析壓縮的 URL 參數:', error);
+                }
+            } else if (oldData) {
+                try {
+                    // 支援舊格式的資料
+                    const decodedData = JSON.parse(decodeURIComponent(oldData));
+                    if (Array.isArray(decodedData)) {
+                        document.getElementById("labelContainer").innerHTML = "";
+                        decodedData.forEach(item => {
+                            if (item.name && item.id) {
+                                const { box, svg } = createLabelElement(item.name, item.id);
+                                document.getElementById("labelContainer").appendChild(box);
+                                JsBarcode(svg).init();
+                            }
+                        });
+                    }
+                } catch (error) {
+                    console.error('無法解析 URL 參數:', error);
+                }
+            }
         }
 
         // 在頁面載入時檢查 URL 參數
