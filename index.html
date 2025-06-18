@@ -166,6 +166,10 @@
         const LABEL_WIDTH = 60;  // mm
         const LABEL_HEIGHT = 40; // mm
 
+        // 添加版本控制
+        const APP_VERSION = '1.0.0';
+        const DATA_VERSION = '1';  // 資料格式版本
+
         function createLabelElement(name, id) {
             const box = document.createElement("div");
             box.className = "label-box bg-white rounded border print-only relative";
@@ -573,19 +577,6 @@
             }
         }
 
-        // 恢復分享連結按鈕和功能
-        document.addEventListener('DOMContentLoaded', function() {
-            const toolbarDiv = document.querySelector('.flex.justify-between.items-center.mb-4');
-            if (toolbarDiv) {
-                const buttonContainer = toolbarDiv.querySelector('.flex.space-x-2');
-                const shareButton = document.createElement('button');
-                shareButton.className = 'bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-200 no-print';
-                shareButton.textContent = '產生分享連結';
-                shareButton.onclick = generateShareLink;
-                buttonContainer.insertBefore(shareButton, buttonContainer.firstChild);
-            }
-        });
-
         // 生成分享連結
         function generateShareLink() {
             const container = document.getElementById("labelContainer");
@@ -605,32 +596,69 @@
             });
 
             try {
-                const compressedData = LZString.compressToEncodedURIComponent(JSON.stringify(labels));
-                const shortUrl = `${window.location.origin}${window.location.pathname}?d=${compressedData}`;
+                const shareData = {
+                    v: DATA_VERSION,  // 加入資料版本
+                    t: Date.now(),    // 加入時間戳記
+                    d: labels         // 實際資料
+                };
+
+                const compressedData = LZString.compressToEncodedURIComponent(JSON.stringify(shareData));
+                const shortUrl = `${window.location.origin}${window.location.pathname}?v=${DATA_VERSION}&d=${compressedData}`;
                 
+                // 創建臨時輸入框來複製連結
                 const tempInput = document.createElement("input");
                 tempInput.value = shortUrl;
                 document.body.appendChild(tempInput);
                 tempInput.select();
                 document.execCommand("copy");
                 document.body.removeChild(tempInput);
-                
-                alert("壓縮後的分享連結已複製到剪貼簿！");
+
+                // 顯示有效期限提示
+                const validityDate = new Date();
+                validityDate.setFullYear(validityDate.getFullYear() + 1);
+                alert(`分享連結已複製到剪貼簿！\n\n註：此連結預計至少在 ${validityDate.getFullYear()} 年 ${validityDate.getMonth() + 1} 月前有效。`);
             } catch (error) {
                 console.error('壓縮網址失敗:', error);
                 alert("無法產生壓縮連結，請稍後再試！");
             }
         }
 
+        // 檢查資料版本相容性
+        function isDataVersionCompatible(version) {
+            // 目前只有版本 1，所以相容性檢查很簡單
+            return version === DATA_VERSION;
+        }
+
         // 讀取 URL 參數並自動生成標籤
         function loadFromURL() {
             const urlParams = new URLSearchParams(window.location.search);
+            const version = urlParams.get('v');
             const compressedData = urlParams.get('d');
             const oldData = urlParams.get('data'); // 支援舊格式
 
             if (compressedData) {
                 try {
-                    const decodedData = JSON.parse(LZString.decompressFromEncodedURIComponent(compressedData));
+                    let decodedData;
+                    if (version) {
+                        // 新版本格式
+                        if (!isDataVersionCompatible(version)) {
+                            alert("警告：此分享連結使用較舊的資料格式，可能無法正確顯示。");
+                        }
+                        const shareData = JSON.parse(LZString.decompressFromEncodedURIComponent(compressedData));
+                        decodedData = shareData.d;
+                        
+                        // 檢查資料時效性
+                        const createTime = new Date(shareData.t);
+                        const now = new Date();
+                        const yearsDiff = now.getFullYear() - createTime.getFullYear();
+                        if (yearsDiff > 0) {
+                            alert(`注意：此分享連結建立於 ${createTime.getFullYear()} 年 ${createTime.getMonth() + 1} 月，已經超過 ${yearsDiff} 年。`);
+                        }
+                    } else {
+                        // 舊版本格式
+                        decodedData = JSON.parse(LZString.decompressFromEncodedURIComponent(compressedData));
+                    }
+
                     if (Array.isArray(decodedData)) {
                         document.getElementById("labelContainer").innerHTML = "";
                         decodedData.forEach(item => {
@@ -650,6 +678,7 @@
                     }
                 } catch (error) {
                     console.error('無法解析壓縮的 URL 參數:', error);
+                    alert("無法載入分享連結，可能是連結已損壞或格式不相容。");
                 }
             } else if (oldData) {
                 // ... 原有的舊格式支援代碼 ...
@@ -658,6 +687,19 @@
 
         // 在頁面載入時檢查 URL 參數
         window.addEventListener('load', loadFromURL);
+
+        // 添加版本資訊到頁面
+        document.addEventListener('DOMContentLoaded', function() {
+            const footer = document.createElement('div');
+            footer.className = 'text-center text-gray-500 text-sm mt-8 pb-4 no-print';
+            footer.innerHTML = `
+                版本 ${APP_VERSION}<br>
+                <a href="https://github.com/white81817/label-generator" target="_blank" class="hover:text-gray-700">
+                    GitHub 原始碼
+                </a>
+            `;
+            document.querySelector('.container').appendChild(footer);
+        });
     </script>
 </body>
 </html> 
