@@ -14,9 +14,6 @@
             .no-print { display: none !important; }
             .print-only { display: block !important; }
             .label-container { margin: 0 !important; padding: 0 !important; }
-            button { display: none !important; }
-            .delete-button { display: none !important; }
-            .label-container-wrapper { margin: 0 !important; }
         }
 
         .label-box {
@@ -26,38 +23,6 @@
             page-break-inside: avoid;
             margin: 0;
             padding: 0;
-            position: relative;
-            display: inline-flex;
-            align-items: center;
-        }
-
-        .label-container-wrapper {
-            display: inline-block;
-            margin-right: 30px;
-            margin-bottom: 10px;
-            position: relative;
-        }
-
-        .delete-button {
-            position: absolute;
-            right: -25px;
-            top: 0;
-            background-color: #ef4444;
-            color: white;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 14px;
-            border: none;
-            outline: none;
-        }
-
-        .delete-button:hover {
-            background-color: #dc2626;
         }
 
         .custom-file-input::-webkit-file-upload-button {
@@ -180,34 +145,18 @@
         const LABEL_HEIGHT = 40; // mm
 
         function createLabelElement(name, id) {
-            // 創建外層容器
-            const wrapper = document.createElement("div");
-            wrapper.className = "label-container-wrapper";
-
             const box = document.createElement("div");
             box.className = "label-box bg-white rounded border print-only";
+            box.style.position = "relative";
+            box.style.padding = "3mm";
             box.style.boxSizing = "border-box";
             box.style.backgroundColor = "white";
-            box.style.padding = "3mm";
+            box.style.height = "151px"; /* 40mm */
+            box.style.width = "226px";  /* 60mm */
             box.style.overflow = "hidden";
             box.style.fontSmooth = "always";
             box.style.webkitFontSmoothing = "antialiased";
             box.style.mozOsxFontSmoothing = "grayscale";
-
-            // 刪除按鈕
-            const deleteButton = document.createElement("button");
-            deleteButton.className = "delete-button no-print";
-            deleteButton.innerHTML = "×";
-            deleteButton.onclick = function(e) {
-                e.preventDefault();
-                if (confirm("確定要刪除這個標籤嗎？")) {
-                    wrapper.remove();
-                }
-            };
-
-            // 將標籤和刪除按鈕添加到包裝器中
-            wrapper.appendChild(box);
-            wrapper.appendChild(deleteButton);
 
             // 商品名稱區域
             const nameContainer = document.createElement("div");
@@ -314,7 +263,7 @@
                 }
             }, 100);
 
-            return { wrapper, svg };
+            return { box, svg };
         }
 
         function addLabel() {
@@ -331,8 +280,8 @@
                 return;
             }
 
-            const { wrapper, svg } = createLabelElement(name, id);
-            document.getElementById("labelContainer").appendChild(wrapper);
+            const { box, svg } = createLabelElement(name, id);
+            document.getElementById("labelContainer").appendChild(box);
             JsBarcode(svg).init();
 
             // 聚焦回商品名稱輸入框
@@ -424,8 +373,8 @@
                             continue;
                         }
                         
-                        const { wrapper, svg } = createLabelElement(trimmedName, trimmedId);
-                        document.getElementById("labelContainer").appendChild(wrapper);
+                        const { box, svg } = createLabelElement(trimmedName, trimmedId);
+                        document.getElementById("labelContainer").appendChild(box);
                         JsBarcode(svg).init();
                     } catch (err) {
                         errorMessages.push(`處理資料時發生錯誤：${name} - ${id}，錯誤訊息：${err.message}`);
@@ -504,19 +453,19 @@
 
                     // 生成高解析度圖片
                     const dataUrl = await domtoimage.toPng(label, {
-                        width: width,
-                        height: height,
-                        style: {
-                            margin: '0',
-                            padding: '3mm',
-                            transform: `scale(${scale})`,
-                            'transform-origin': 'top left',
-                            '-webkit-transform-origin': 'top left'
-                        },
-                        quality: 1.0,
-                        height: height,
-                        width: width
-                    });
+                    width: width,
+                    height: height,
+                    style: {
+                        margin: '0',
+                        padding: '3mm',
+                        transform: `scale(${scale})`,
+                        'transform-origin': 'top left',
+                        '-webkit-transform-origin': 'top left'
+                    },
+                    quality: 1.0,
+                    height: height,
+                    width: width
+                });
 
                     // 如果不是第一頁，添加新頁面
                     if (i > 0) {
@@ -524,16 +473,16 @@
                     }
 
                     // 添加圖片到 PDF
-                    pdf.addImage(
-                        dataUrl,
-                        'PNG',
-                        0,
-                        0,
+                pdf.addImage(
+                    dataUrl,
+                    'PNG',
+                    0,
+                    0,
                         LABEL_WIDTH,
                         LABEL_HEIGHT,
-                        undefined,
-                        'NONE'
-                    );
+                    undefined,
+                    'NONE'
+                );
                 }
 
                 pdf.save('labels.pdf');
@@ -543,6 +492,73 @@
                 console.error(error);
             }
         }
+
+        // 讀取 URL 參數並自動生成標籤
+        function loadFromURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const labelData = urlParams.get('data');
+            if (labelData) {
+                try {
+                    const decodedData = JSON.parse(decodeURIComponent(labelData));
+                    if (Array.isArray(decodedData)) {
+                        document.getElementById("labelContainer").innerHTML = "";
+                        decodedData.forEach(item => {
+                            if (item.name && item.id) {
+                                const { box, svg } = createLabelElement(item.name, item.id);
+                                document.getElementById("labelContainer").appendChild(box);
+                                JsBarcode(svg).init();
+                            }
+                        });
+                    }
+                } catch (error) {
+                    console.error('無法解析 URL 參數:', error);
+                }
+            }
+        }
+
+        // 生成分享連結
+        function generateShareLink() {
+            const container = document.getElementById("labelContainer");
+            if (!container.firstChild) {
+                alert("請先產生標籤！");
+                return;
+            }
+
+            const labels = Array.from(container.children).map(label => {
+                return {
+                    name: label.querySelector('.text-center').innerText,
+                    id: label.querySelector('svg').getAttribute('jsbarcode-value')
+                };
+            });
+
+            const data = encodeURIComponent(JSON.stringify(labels));
+            const url = `${window.location.origin}${window.location.pathname}?data=${data}`;
+            
+            // 創建臨時輸入框來複製連結
+            const tempInput = document.createElement("input");
+            tempInput.value = url;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand("copy");
+            document.body.removeChild(tempInput);
+            
+            alert("分享連結已複製到剪貼簿！");
+        }
+
+        // 在頁面載入時檢查 URL 參數
+        window.addEventListener('load', loadFromURL);
+
+        // 添加分享按鈕到工具列
+        document.addEventListener('DOMContentLoaded', function() {
+            const toolbarDiv = document.querySelector('.flex.justify-between.items-center.mb-4');
+            if (toolbarDiv) {
+                const shareButton = document.createElement('button');
+                shareButton.className = 'bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-200 no-print';
+                shareButton.textContent = '產生分享連結';
+                shareButton.onclick = generateShareLink;
+                toolbarDiv.insertBefore(shareButton, toolbarDiv.lastChild);
+            }
+        });
     </script>
 </body>
 </html> 
