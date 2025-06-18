@@ -79,6 +79,18 @@
                                placeholder="請輸入商品名稱">
                     </div>
                     <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">樣式</label>
+                        <input type="text" id="productStyle" 
+                               class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                               placeholder="請輸入樣式">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">尺寸</label>
+                        <input type="text" id="productSize" 
+                               class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                               placeholder="請輸入尺寸">
+                    </div>
+                    <div>
                         <label class="block text-gray-700 text-sm font-bold mb-2">商品編號</label>
                         <input type="text" id="productId" 
                                class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
@@ -105,7 +117,7 @@
                         <label class="block text-gray-700 text-sm font-bold mb-2">CSV檔案匯入</label>
                         <input type="file" id="csvFile" accept=".csv,.xlsx,.xls" 
                                class="custom-file-input w-full mb-4">
-                        <p class="text-sm text-gray-500 mt-1">支援格式：CSV 或 Excel (商品名稱,商品編號)</p>
+                        <p class="text-sm text-gray-500 mt-1">支援格式：CSV 或 Excel (商品名稱,樣式,尺寸,商品編號)</p>
                         <div class="flex items-center space-x-2 mt-2">
                             <button onclick="downloadExampleFile()" 
                                     class="text-blue-500 hover:text-blue-700 text-sm flex items-center">
@@ -268,6 +280,8 @@
 
         function addLabel() {
             const name = document.getElementById("productName").value.trim();
+            const style = document.getElementById("productStyle").value.trim();
+            const size = document.getElementById("productSize").value.trim();
             const id = document.getElementById("productId").value.trim();
 
             if (!name || !id) {
@@ -275,12 +289,21 @@
                 return;
             }
 
-            if (name.length > 50) {
+            // 組合完整的顯示文字
+            let displayText = name;
+            if (style) {
+                displayText += ` - ${style}`;
+            }
+            if (size) {
+                displayText += ` - ${size}`;
+            }
+
+            if (displayText.length > 50) {
                 alert("商品名稱過長！最多支援50個字元。");
                 return;
             }
 
-            const { box, svg } = createLabelElement(name, id);
+            const { box, svg } = createLabelElement(displayText, id);
             document.getElementById("labelContainer").appendChild(box);
             JsBarcode(svg).init();
 
@@ -296,8 +319,20 @@
             }
         }
 
-        // 添加鍵盤事件支援
+        // 更新鍵盤事件
         document.getElementById("productName").addEventListener("keypress", function(e) {
+            if (e.key === "Enter") {
+                document.getElementById("productStyle").focus();
+            }
+        });
+
+        document.getElementById("productStyle").addEventListener("keypress", function(e) {
+            if (e.key === "Enter") {
+                document.getElementById("productSize").focus();
+            }
+        });
+
+        document.getElementById("productSize").addEventListener("keypress", function(e) {
             if (e.key === "Enter") {
                 document.getElementById("productId").focus();
             }
@@ -319,61 +354,57 @@
             try {
                 let rows = [];
                 if (file.name.toLowerCase().endsWith('.csv')) {
-                    // 處理 CSV 檔案
                     const text = await file.text();
                     rows = text.split('\n')
                         .map(row => row.trim())
                         .filter(row => row)
                         .map(row => {
                             const columns = row.split(',');
-                            return [columns[0], columns[1]]; // 只取前兩列
+                            return [columns[0], columns[1], columns[2], columns[3]]; // 取四列
                         })
-                        .filter(row => row[0] && row[1]); // 確保兩個欄位都有值
+                        .filter(row => row[0] && row[3]); // 確保至少有商品名稱和編號
                 } else if (file.name.toLowerCase().endsWith('.xlsx') || file.name.toLowerCase().endsWith('.xls')) {
-                    // 處理 Excel 檔案
                     const data = await file.arrayBuffer();
                     const workbook = XLSX.read(data);
                     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
                     const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
                     
-                    // 過濾並處理數據
                     rows = jsonData
-                        .filter(row => Array.isArray(row) && row.length >= 2 && row[0] && row[1]) // 確保有效的行
-                        .map(row => [String(row[0]).trim(), String(row[1]).trim()]); // 轉換為字串並清理
-                } else {
-                    throw new Error("不支援的檔案格式。請使用 CSV 或 Excel 檔案。");
+                        .filter(row => Array.isArray(row) && row.length >= 4 && row[0] && row[3])
+                        .map(row => [
+                            String(row[0]).trim(),
+                            String(row[1] || '').trim(),
+                            String(row[2] || '').trim(),
+                            String(row[3]).trim()
+                        ]);
                 }
 
-                // 移除標題行（如果存在）
+                // 移除標題行
                 if (rows.length > 0 && 
-                    (rows[0][0].includes("商品名稱") || rows[0][0].includes("品名") || 
-                     rows[0][1].includes("商品編號") || rows[0][1].includes("編號"))) {
+                    (rows[0][0].includes("商品名稱") || 
+                     rows[0][3].includes("商品編號"))) {
                     rows.shift();
-                }
-
-                if (rows.length === 0) {
-                    throw new Error("檔案中沒有有效的資料。請確認檔案格式是否正確。");
                 }
 
                 document.getElementById("labelContainer").innerHTML = "";
                 
                 let errorMessages = [];
-                for (const [name, id] of rows) {
+                for (const [name, style, size, id] of rows) {
                     try {
-                        const trimmedName = String(name).trim();
-                        const trimmedId = String(id).trim();
+                        let displayText = name;
+                        if (style) {
+                            displayText += ` - ${style}`;
+                        }
+                        if (size) {
+                            displayText += ` - ${size}`;
+                        }
                         
-                        if (!trimmedName || !trimmedId) {
-                            errorMessages.push(`跳過空白資料：${name} - ${id}`);
+                        if (displayText.length > 50) {
+                            errorMessages.push(`警告：商品 "${name}" 的完整文字過長（超過50字），已被跳過。`);
                             continue;
                         }
                         
-                        if (trimmedName.length > 50) {
-                            errorMessages.push(`警告：商品名稱 "${trimmedName}" 過長（超過50字），已被跳過。`);
-                            continue;
-                        }
-                        
-                        const { box, svg } = createLabelElement(trimmedName, trimmedId);
+                        const { box, svg } = createLabelElement(displayText, id);
                         document.getElementById("labelContainer").appendChild(box);
                         JsBarcode(svg).init();
                     } catch (err) {
@@ -387,37 +418,32 @@
 
             } catch (error) {
                 console.error("檔案處理錯誤：", error);
-                alert("檔案處理失敗：" + (error.message || "請確認檔案格式是否正確，並且包含商品名稱和編號兩個欄位。"));
+                alert("檔案處理失敗：" + (error.message || "請確認檔案格式是否正確。"));
             }
         }
 
         function downloadExampleFile() {
-            // 創建工作簿
             const wb = XLSX.utils.book_new();
             
-            // 準備示例數據
             const exampleData = [
-                ["商品名稱", "商品編號"],
-                ["測試商品A", "TEST001"],
-                ["測試商品B", "TEST002"],
-                ["商品名稱可以很長很長很長", "TEST003"],
-                ["商品名稱可以換行的說明文字", "TEST004"]
+                ["商品名稱", "樣式", "尺寸", "商品編號"],
+                ["測試商品A", "黑色", "S", "TEST001"],
+                ["測試商品B", "白色", "M", "TEST002"],
+                ["商品名稱可以很長很長很長", "藍色", "L", "TEST003"],
+                ["商品名稱可以換行的說明文字", "紅色", "XL", "TEST004"]
             ];
             
-            // 創建工作表
             const ws = XLSX.utils.aoa_to_sheet(exampleData);
             
-            // 設定欄寬
             const wscols = [
                 {wch: 30},  // 商品名稱欄寬
+                {wch: 15},  // 樣式欄寬
+                {wch: 15},  // 尺寸欄寬
                 {wch: 15}   // 商品編號欄寬
             ];
             ws['!cols'] = wscols;
             
-            // 將工作表加入工作簿
             XLSX.utils.book_append_sheet(wb, ws, "標籤範例");
-            
-            // 下載檔案
             XLSX.writeFile(wb, "標籤範例.xlsx");
         }
 
