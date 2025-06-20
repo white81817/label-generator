@@ -98,7 +98,7 @@
                                placeholder="請輸入商品編號">
                     </div>
                     <div>
-                        <label class="block text-gray-700 text-sm font-bold mb-2">備註（不會顯示在標籤上）</label>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">備註</label>
                         <textarea id="productNote" 
                                class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
                                placeholder="請輸入備註"
@@ -166,8 +166,7 @@
         const LABEL_WIDTH = 60;  // mm
         const LABEL_HEIGHT = 40; // mm
 
-        // 添加版本控制
-        const APP_VERSION = '1.0.0';
+        // 添加資料格式版本控制
         const DATA_VERSION = '1';  // 資料格式版本
 
         function createLabelElement(name, id) {
@@ -315,6 +314,9 @@
             if (size) {
                 displayText += ` - ${size}`;
             }
+            if (note) {
+                displayText += ` - ${note}`;
+            }
 
             if (displayText.length > 50) {
                 alert("商品名稱過長！最多支援50個字元。");
@@ -323,12 +325,9 @@
 
             const { box, svg } = createLabelElement(displayText, id);
             
-            // 如果有備註，添加備註區塊
+            // 如果有備註，將其儲存在 data attribute 中
             if (note) {
-                const noteDiv = document.createElement("div");
-                noteDiv.className = "w-full bg-gray-50 p-2 rounded mt-2 text-sm text-gray-600 no-print";
-                noteDiv.innerHTML = `<span class="font-semibold">備註：</span>${note}`;
-                box.appendChild(noteDiv);
+                box.dataset.note = note;
             }
 
             document.getElementById("labelContainer").appendChild(box);
@@ -423,6 +422,9 @@
                         if (size) {
                             displayText += ` - ${size}`;
                         }
+                        if (note) {
+                            displayText += ` - ${note}`;
+                        }
                         
                         if (displayText.length > 50) {
                             errorMessages.push(`警告：商品 "${name}" 的完整文字過長（超過50字），已被跳過。`);
@@ -431,12 +433,9 @@
                         
                         const { box, svg } = createLabelElement(displayText, id);
                         
-                        // 如果有備註，添加備註區塊
+                        // 如果有備註，將其儲存在 data attribute 中
                         if (note) {
-                            const noteDiv = document.createElement("div");
-                            noteDiv.className = "w-full bg-gray-50 p-2 rounded mt-2 text-sm text-gray-600 no-print";
-                            noteDiv.innerHTML = `<span class="font-semibold">備註：</span>${note}`;
-                            box.appendChild(noteDiv);
+                            box.dataset.note = note;
                         }
                         
                         document.getElementById("labelContainer").appendChild(box);
@@ -587,46 +586,35 @@
 
             const labels = Array.from(container.children).map(container => {
                 const labelBox = container.querySelector('.label-box');
-                const noteDiv = container.querySelector('.text-gray-600');
+                const note = container.dataset.note || '';
                 return [
                     labelBox.querySelector('.text-center').innerText,
                     labelBox.querySelector('svg').getAttribute('jsbarcode-value'),
-                    noteDiv ? noteDiv.textContent.replace('備註：', '').trim() : ''
+                    note
                 ];
             });
 
             try {
                 const shareData = {
                     v: DATA_VERSION,  // 加入資料版本
-                    t: Date.now(),    // 加入時間戳記
                     d: labels         // 實際資料
                 };
 
                 const compressedData = LZString.compressToEncodedURIComponent(JSON.stringify(shareData));
                 const shortUrl = `${window.location.origin}${window.location.pathname}?v=${DATA_VERSION}&d=${compressedData}`;
                 
-                // 創建臨時輸入框來複製連結
                 const tempInput = document.createElement("input");
                 tempInput.value = shortUrl;
                 document.body.appendChild(tempInput);
                 tempInput.select();
                 document.execCommand("copy");
                 document.body.removeChild(tempInput);
-
-                // 顯示有效期限提示
-                const validityDate = new Date();
-                validityDate.setFullYear(validityDate.getFullYear() + 1);
-                alert(`分享連結已複製到剪貼簿！\n\n註：此連結預計至少在 ${validityDate.getFullYear()} 年 ${validityDate.getMonth() + 1} 月前有效。`);
+                
+                alert("分享連結已複製到剪貼簿！");
             } catch (error) {
                 console.error('壓縮網址失敗:', error);
                 alert("無法產生壓縮連結，請稍後再試！");
             }
-        }
-
-        // 檢查資料版本相容性
-        function isDataVersionCompatible(version) {
-            // 目前只有版本 1，所以相容性檢查很簡單
-            return version === DATA_VERSION;
         }
 
         // 讀取 URL 參數並自動生成標籤
@@ -641,19 +629,8 @@
                     let decodedData;
                     if (version) {
                         // 新版本格式
-                        if (!isDataVersionCompatible(version)) {
-                            alert("警告：此分享連結使用較舊的資料格式，可能無法正確顯示。");
-                        }
                         const shareData = JSON.parse(LZString.decompressFromEncodedURIComponent(compressedData));
                         decodedData = shareData.d;
-                        
-                        // 檢查資料時效性
-                        const createTime = new Date(shareData.t);
-                        const now = new Date();
-                        const yearsDiff = now.getFullYear() - createTime.getFullYear();
-                        if (yearsDiff > 0) {
-                            alert(`注意：此分享連結建立於 ${createTime.getFullYear()} 年 ${createTime.getMonth() + 1} 月，已經超過 ${yearsDiff} 年。`);
-                        }
                     } else {
                         // 舊版本格式
                         decodedData = JSON.parse(LZString.decompressFromEncodedURIComponent(compressedData));
@@ -666,10 +643,7 @@
                                 const [name, id, note] = item;
                                 const { box, svg } = createLabelElement(name, id);
                                 if (note) {
-                                    const noteDiv = document.createElement("div");
-                                    noteDiv.className = "w-full bg-gray-50 p-2 rounded mt-2 text-sm text-gray-600 no-print";
-                                    noteDiv.innerHTML = `<span class="font-semibold">備註：</span>${note}`;
-                                    box.appendChild(noteDiv);
+                                    box.dataset.note = note;
                                 }
                                 document.getElementById("labelContainer").appendChild(box);
                                 JsBarcode(svg).init();
@@ -678,7 +652,7 @@
                     }
                 } catch (error) {
                     console.error('無法解析壓縮的 URL 參數:', error);
-                    alert("無法載入分享連結，可能是連結已損壞或格式不相容。");
+                    alert("無法載入分享連結，請稍後再試。");
                 }
             } else if (oldData) {
                 // ... 原有的舊格式支援代碼 ...
@@ -693,7 +667,7 @@
             const footer = document.createElement('div');
             footer.className = 'text-center text-gray-500 text-sm mt-8 pb-4 no-print';
             footer.innerHTML = `
-                版本 ${APP_VERSION}<br>
+                版本 ${DATA_VERSION}<br>
                 <a href="https://github.com/white81817/label-generator" target="_blank" class="hover:text-gray-700">
                     GitHub 原始碼
                 </a>
