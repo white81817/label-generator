@@ -67,6 +67,38 @@
             <p class="text-gray-600">標籤尺寸：60mm x 40mm</p>
         </div>
 
+        <!-- 新增：商品/廠商資料管理區塊 -->
+        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+            <h2 class="text-xl font-semibold mb-4 text-gray-700">商品/廠商資料管理</h2>
+            <div class="flex flex-col md:flex-row md:items-end gap-4 mb-4">
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">資料庫匯入（永久，會覆蓋）</label>
+                    <input type="file" id="dbImportFile" accept=".csv,.xlsx,.xls" class="block" onchange="importProductDatabase(event, true)">
+                    <button onclick="downloadProductDatabaseTemplate()" class="mt-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded px-2 py-1 text-sm">下載資料庫匯入範本</button>
+                </div>
+                <div class="flex-1">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">廠商篩選（可搜尋）</label>
+                    <input type="text" id="vendorFilterInput" class="w-full px-3 py-2 border rounded-lg" placeholder="輸入廠商名稱搜尋或篩選" oninput="updateProductListUI();updateVendorAutocompleteUI()" list="vendorAutocomplete">
+                    <datalist id="vendorAutocomplete"></datalist>
+                </div>
+                <div class="flex-1">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">商品搜尋</label>
+                    <input type="text" id="productSearch" class="w-full px-3 py-2 border rounded-lg" placeholder="輸入商品名稱/編號/樣式/尺寸" oninput="updateProductListUI()">
+                </div>
+            </div>
+            <div>
+                <label class="block text-gray-700 text-sm font-bold mb-2">商品清單</label>
+                <div id="productList" class="border rounded p-2 min-h-[60px] max-h-96 overflow-y-auto bg-gray-50"></div>
+                <div class="flex items-center justify-between mt-2">
+                    <div id="selectedCount" class="text-sm text-gray-600"></div>
+                    <div id="pagination" class="flex space-x-1"></div>
+                </div>
+            </div>
+            <div class="mt-4">
+                <button onclick="exportSelectedLabels()" class="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-200">匯出標籤</button>
+            </div>
+        </div>
+
         <!-- 主要操作區 -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 no-print">
             <!-- 左側：單筆輸入 -->
@@ -677,7 +709,142 @@
                 </a>
             `;
             document.querySelector('.container').appendChild(footer);
+            updateVendorAutocompleteUI();
+            updateProductListUI();
         });
+
+        function updateVendorAutocompleteUI() {
+            const datalist = document.getElementById('vendorAutocomplete');
+            if (!datalist) return;
+            const products = getAllProducts();
+            const vendors = Array.from(new Set(products.map(p => p.vendor).filter(Boolean)));
+            datalist.innerHTML = vendors.map(v => `<option value="${v}">`).join('');
+        }
+
+        // 分頁與選取狀態
+        let currentPage = 1;
+        const PAGE_SIZE = 20;
+        let lastFilteredProducts = [];
+
+        function updateProductListUI() {
+            const list = document.getElementById('productList');
+            if (!list) return;
+            const vendor = document.getElementById('vendorFilterInput').value.trim();
+            const keyword = document.getElementById('productSearch').value.trim();
+            const allProducts = getAllProducts();
+            const products = allProducts.filter(p => {
+                if (vendor && !p.vendor.includes(vendor)) return false;
+                if (keyword && !(p.name.includes(keyword) || p.id.includes(keyword) || p.style.includes(keyword) || p.size.includes(keyword))) return false;
+                return true;
+            });
+            lastFilteredProducts = products;
+            // 分頁
+            const totalPages = Math.max(1, Math.ceil(products.length / PAGE_SIZE));
+            if (currentPage > totalPages) currentPage = totalPages;
+            const startIdx = (currentPage - 1) * PAGE_SIZE;
+            const endIdx = startIdx + PAGE_SIZE;
+            const pageProducts = products.slice(startIdx, endIdx);
+            if (products.length === 0) {
+                list.innerHTML = '<div class="text-gray-400 text-sm">無符合條件的商品</div>';
+                document.getElementById('pagination').innerHTML = '';
+                document.getElementById('selectedCount').innerText = '';
+                return;
+            }
+            list.innerHTML = '<div><label><input type="checkbox" id="selectAllProducts" onchange="toggleSelectAllProducts(this)"> 全選</label></div>' +
+                pageProducts.map((p, i) => `<div><label><input type="checkbox" class="productCheckbox" data-index="${startIdx + i}"> ${p.name}（${p.vendor}） - ${p.style} - ${p.size} - ${p.id} ${p.note?(' - '+p.note):''}</label></div>`).join('');
+            // 分頁按鈕
+            const pagination = document.getElementById('pagination');
+            let html = '';
+            for (let i = 1; i <= totalPages; i++) {
+                html += `<button onclick="gotoPage(${i})" class="px-2 py-1 rounded ${i===currentPage?'bg-blue-500 text-white':'bg-gray-200 text-gray-700 hover:bg-gray-300'} text-sm">${i}</button>`;
+            }
+            pagination.innerHTML = html;
+            updateSelectedCount();
+        }
+
+        function gotoPage(page) {
+            currentPage = page;
+            updateProductListUI();
+        }
+
+        function updateSelectedCount() {
+            const boxes = document.querySelectorAll('.productCheckbox');
+            let count = 0;
+            boxes.forEach(b => { if (b.checked) count++; });
+            document.getElementById('selectedCount').innerText = `已選取 ${count} 筆商品`;
+        }
+
+        // 監聽勾選狀態變化
+        document.addEventListener('change', function(e) {
+            if (e.target.classList.contains('productCheckbox')) {
+                updateSelectedCount();
+            }
+        });
+
+        function toggleSelectAllProducts(checkbox) {
+            const boxes = document.querySelectorAll('.productCheckbox');
+            boxes.forEach(b => b.checked = checkbox.checked);
+            updateSelectedCount();
+        }
+
+        function exportSelectedLabels() {
+            const list = document.getElementById('productList');
+            if (!list) return;
+            const boxes = list.querySelectorAll('.productCheckbox');
+            let selected = [];
+            boxes.forEach((b, i) => { if (b.checked) selected.push(lastFilteredProducts[(currentPage-1)*PAGE_SIZE + i]); });
+            if (selected.length === 0) {
+                alert('請先勾選要匯出的商品！');
+                return;
+            }
+            // 清空標籤預覽區
+            document.getElementById("labelContainer").innerHTML = "";
+            selected.forEach(p => {
+                const { box, svg } = createLabelElement(
+                    [p.name, p.style, p.size, p.note].filter(Boolean).join(' - '),
+                    p.id
+                );
+                document.getElementById("labelContainer").appendChild(box);
+                JsBarcode(svg).init();
+            });
+            alert('已將選取商品匯出到標籤預覽區，請點擊匯出PDF或分享連結！');
+        }
+
+        // 頁面載入時初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            updateVendorAutocompleteUI();
+            updateProductListUI();
+            currentPage = 1;
+        });
+
+        function downloadProductDatabaseTemplate() {
+            const wb = XLSX.utils.book_new();
+            const exampleData = [
+                ["商品名稱", "廠商名稱", "樣式", "尺寸", "商品編號", "備註"],
+                ["商品A", "廠商甲", "紅色", "L", "PROD001", "這是備註A"],
+                ["商品B", "廠商乙", "藍色", "M", "PROD002", "這是備註B"],
+                ["商品C", "廠商甲", "綠色", "S", "PROD003", ""],
+                ["商品D", "廠商丙", "黑色", "XL", "PROD004", "特價商品"]
+            ];
+            const ws = XLSX.utils.aoa_to_sheet(exampleData);
+            const wscols = [
+                {wch: 20},  // 商品名稱
+                {wch: 15},  // 廠商名稱
+                {wch: 10},  // 樣式
+                {wch: 10},  // 尺寸
+                {wch: 15},  // 商品編號
+                {wch: 20}   // 備註
+            ];
+            ws['!cols'] = wscols;
+            XLSX.utils.book_append_sheet(wb, ws, "商品資料範本");
+            XLSX.writeFile(wb, "商品廠商資料庫範本.xlsx");
+        }
+
+        function getAllProducts() {
+            let db = [];
+            try { db = JSON.parse(localStorage.getItem('productDatabase')||'[]'); } catch(e){}
+            return db;
+        }
     </script>
 </body>
 </html> 
