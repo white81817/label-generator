@@ -26,6 +26,15 @@
             padding: 0;
         }
 
+        .medium-label-box {
+            width: 302px;  /* 80mm */
+            height: 378px; /* 100mm */
+            break-inside: avoid;
+            page-break-inside: avoid;
+            margin: 0;
+            padding: 0;
+        }
+
         .custom-file-input::-webkit-file-upload-button {
             visibility: hidden;
             width: 0;
@@ -106,7 +115,7 @@
                 <h2 class="text-xl font-semibold mb-4 text-gray-700">手動標籤產生</h2>
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-gray-700 text-sm font-bold mb-2">商品名稱</label>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">商品名稱 (必填)</label>
                         <input type="text" id="productName" 
                                class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
                                placeholder="請輸入商品名稱">
@@ -124,17 +133,44 @@
                                placeholder="請輸入尺寸">
                     </div>
                     <div>
-                        <label class="block text-gray-700 text-sm font-bold mb-2">商品編號</label>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">商品編號 (必填)</label>
                         <input type="text" id="productId" 
                                class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
                                placeholder="請輸入商品編號">
                     </div>
                     <div>
-                        <label class="block text-gray-700 text-sm font-bold mb-2">備註</label>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">品名補充 (選填)</label>
                         <textarea id="productNote" 
                                class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-                               placeholder="請輸入備註"
+                               placeholder="請輸入品名補充"
                                rows="2"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">商品中標備註 (選填)</label>
+                        <textarea id="productSpecNote" 
+                               class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                               placeholder="請輸入商品中標備註"
+                               rows="2"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">商品產地 (選填)</label>
+                        <div class="flex space-x-4">
+                            <label class="flex items-center">
+                                <input type="radio" name="productOrigin" value="china" class="mr-2">
+                                <span class="text-gray-700">中國(大陸)</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="radio" name="productOrigin" value="taiwan" class="mr-2">
+                                <span class="text-gray-700">台灣</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">數量</label>
+                        <input type="number" id="productQuantity" 
+                               class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                               placeholder="請輸入數量"
+                               min="1" value="1">
                     </div>
                     <div class="flex space-x-2">
                         <button onclick="addLabel()" 
@@ -153,7 +189,7 @@
                         <label class="block text-gray-700 text-sm font-bold mb-2">CSV檔案匯入</label>
                         <input type="file" id="csvFile" accept=".csv,.xlsx,.xls" 
                                class="custom-file-input w-full mb-4">
-                        <p class="text-sm text-gray-500 mt-1">支援格式：CSV 或 Excel (商品名稱,樣式,尺寸,商品編號,備註)</p>
+                        <p class="text-sm text-gray-500 mt-1">支援格式：CSV 或 Excel (商品名稱,樣式,尺寸,商品編號,品名補充,商品中標備註,產地,數量)</p>
                         <div class="flex items-center space-x-2 mt-2">
                             <button onclick="downloadExampleFile()" 
                                     class="text-blue-500 hover:text-blue-700 text-sm flex items-center">
@@ -179,10 +215,28 @@
                 <div class="flex justify-between items-center mb-4 no-print">
                     <h2 class="text-xl font-semibold text-gray-700">標籤預覽</h2>
                     <div class="flex space-x-2">
-                        <button onclick="exportPDF()" 
-                                class="bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition duration-200">
-                            匯出PDF
+                        <button onclick="showSmallLabels()" 
+                                class="bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition duration-200">
+                            條碼標籤預覽
                         </button>
+                        <button onclick="showMediumLabels()" 
+                                class="bg-purple-500 text-white py-2 px-4 rounded-lg hover:bg-purple-600 transition duration-200">
+                            中標籤預覽
+                        </button>
+                        <button onclick="showAllLabels()" 
+                                class="bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition duration-200">
+                            全部預覽
+                        </button>
+                        <div class="flex space-x-2">
+                            <button onclick="exportSmallLabelsPDF()" 
+                                    class="bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition duration-200">
+                                匯出條碼標籤PDF
+                            </button>
+                            <button onclick="exportMediumLabelsPDF()" 
+                                    class="bg-purple-500 text-white py-2 px-4 rounded-lg hover:bg-purple-600 transition duration-200">
+                                匯出中標籤PDF
+                            </button>
+                        </div>
                         <button onclick="generateShareLink()"
                                 class="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-200">
                             產生分享連結
@@ -204,6 +258,199 @@
 
         // 添加資料格式版本控制
         const DATA_VERSION = '1';  // 資料格式版本
+
+        function createMediumLabelElement(name, style, size, specNote, id, origin) {
+            const box = document.createElement("div");
+            box.className = "medium-label-box bg-white rounded border print-only relative";
+            box.style.position = "relative";
+            box.style.padding = "5mm";
+            box.style.boxSizing = "border-box";
+            box.style.backgroundColor = "white";
+            box.style.height = "378px"; /* 100mm */
+            box.style.width = "302px";  /* 80mm */
+            box.style.overflow = "hidden";
+            box.style.fontSmooth = "always";
+            box.style.webkitFontSmoothing = "antialiased";
+            box.style.mozOsxFontSmoothing = "grayscale";
+
+            // 添加刪除按鈕
+            const deleteButton = document.createElement("button");
+            deleteButton.className = "absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm no-print hover:bg-red-600 focus:outline-none";
+            deleteButton.innerHTML = "×";
+            deleteButton.style.zIndex = "10";
+            deleteButton.onclick = function(e) {
+                e.stopPropagation();
+                if (confirm("確定要刪除這個中標標籤嗎？")) {
+                    box.parentElement.remove(); // 移除整個容器
+                }
+            };
+            box.appendChild(deleteButton);
+
+            // 內容容器
+            const contentContainer = document.createElement("div");
+            contentContainer.style.position = "absolute";
+            contentContainer.style.top = "5mm";
+            contentContainer.style.left = "5mm";
+            contentContainer.style.right = "5mm";
+            contentContainer.style.bottom = "5mm";
+            contentContainer.style.display = "flex";
+            contentContainer.style.flexDirection = "column";
+            contentContainer.style.justifyContent = "flex-start";
+            contentContainer.style.alignItems = "flex-start";
+            contentContainer.style.backgroundColor = "transparent";
+
+            // 1. 商品名稱
+            const nameDiv = document.createElement("div");
+            nameDiv.className = "font-bold text-left";
+            nameDiv.style.fontSize = "18px";
+            nameDiv.style.lineHeight = "1.4";
+            nameDiv.style.marginBottom = "8mm";
+            nameDiv.style.wordBreak = "break-all";
+            nameDiv.style.wordWrap = "break-word";
+            nameDiv.style.whiteSpace = "pre-wrap";
+            nameDiv.style.backgroundColor = "transparent";
+            nameDiv.innerText = name;
+
+            // 2. 樣式尺寸
+            const styleSizeDiv = document.createElement("div");
+            styleSizeDiv.className = "text-left";
+            styleSizeDiv.style.fontSize = "16px";
+            styleSizeDiv.style.lineHeight = "1.4";
+            styleSizeDiv.style.marginBottom = "8mm";
+            styleSizeDiv.style.wordBreak = "break-all";
+            styleSizeDiv.style.wordWrap = "break-word";
+            styleSizeDiv.style.whiteSpace = "pre-wrap";
+            styleSizeDiv.style.backgroundColor = "transparent";
+            
+            let styleSizeText = "";
+            if (style && size) {
+                styleSizeText = `${style} - ${size}`;
+            } else if (style) {
+                styleSizeText = style;
+            } else if (size) {
+                styleSizeText = size;
+            }
+            styleSizeDiv.innerText = styleSizeText;
+
+            // 3. 規格備注
+            const specNoteDiv = document.createElement("div");
+            specNoteDiv.className = "text-left";
+            specNoteDiv.style.fontSize = "14px";
+            specNoteDiv.style.lineHeight = "1.4";
+            specNoteDiv.style.wordBreak = "break-all";
+            specNoteDiv.style.wordWrap = "break-word";
+            specNoteDiv.style.whiteSpace = "pre-wrap";
+            specNoteDiv.style.backgroundColor = "transparent";
+            specNoteDiv.innerHTML = (specNote || "").replace(/<br>/gi, '<br>');
+
+            contentContainer.appendChild(nameDiv);
+            contentContainer.appendChild(styleSizeDiv);
+            contentContainer.appendChild(specNoteDiv);
+            
+            // 添加條碼容器
+            if (id) {
+                const barcodeContainer = document.createElement("div");
+                barcodeContainer.style.position = "absolute";
+                barcodeContainer.style.bottom = "5mm";
+                barcodeContainer.style.left = "5mm";
+                barcodeContainer.style.right = "5mm";
+                barcodeContainer.style.height = "auto";
+                barcodeContainer.style.display = "flex";
+                barcodeContainer.style.flexDirection = "column";
+                barcodeContainer.style.justifyContent = "flex-end";
+                barcodeContainer.style.alignItems = "center";
+                barcodeContainer.style.backgroundColor = "transparent";
+
+                // 如果有產地資訊，添加公司資訊
+                if (origin) {
+                    const companyInfoDiv = document.createElement("div");
+                    companyInfoDiv.style.fontSize = "10px";
+                    companyInfoDiv.style.lineHeight = "1.2";
+                    companyInfoDiv.style.textAlign = "center";
+                    companyInfoDiv.style.marginBottom = "2mm";
+                    companyInfoDiv.style.backgroundColor = "transparent";
+                    
+                    let originText = '';
+                    if (origin === 'china') {
+                        originText = '中國';
+                    } else if (origin === 'taiwan') {
+                        originText = '台灣';
+                    }
+                    
+                    companyInfoDiv.innerHTML = `
+                        公司名稱：台灣迪品有限公司<br>
+                        公司電話：0285123556<br>
+                        公司地址：新北市五股區五權五路15號6樓<br>
+                        產地：${originText}
+                    `;
+                    
+                    barcodeContainer.appendChild(companyInfoDiv);
+                }
+
+                // 條碼外層容器
+                const barcodeWrapper = document.createElement("div");
+                barcodeWrapper.style.width = "90%";
+                barcodeWrapper.style.display = "flex";
+                barcodeWrapper.style.justifyContent = "center";
+                barcodeWrapper.style.alignItems = "center";
+                barcodeWrapper.style.overflow = "hidden";
+                barcodeWrapper.style.backgroundColor = "transparent";
+
+                // 條碼
+                const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                svg.setAttribute("jsbarcode-format", "CODE128");
+                svg.setAttribute("jsbarcode-value", id);
+                svg.setAttribute("jsbarcode-height", "45");
+                svg.setAttribute("jsbarcode-width", "1.5");
+                svg.setAttribute("jsbarcode-displayValue", "true");
+                svg.setAttribute("jsbarcode-margin", "0");
+                svg.setAttribute("jsbarcode-textMargin", "2");
+                svg.setAttribute("jsbarcode-fontSize", "12");
+                svg.style.width = "100%";
+                svg.style.height = "auto";
+                svg.style.display = "block";
+                svg.style.shapeRendering = "crispEdges";
+
+                barcodeWrapper.appendChild(svg);
+                barcodeContainer.appendChild(barcodeWrapper);
+                box.appendChild(barcodeContainer);
+            }
+            
+            box.appendChild(contentContainer);
+
+            // 創建外層容器
+            const container = document.createElement("div");
+            container.className = "flex flex-col items-center mb-4";
+            
+            // 添加數量編輯區域
+            const quantityContainer = document.createElement("div");
+            quantityContainer.className = "flex items-center space-x-2 mt-2 no-print";
+            quantityContainer.style.justifyContent = "center";
+            
+            const quantityLabel = document.createElement("label");
+            quantityLabel.className = "text-sm text-gray-600 font-medium";
+            quantityLabel.textContent = "數量：";
+            
+            const quantityInput = document.createElement("input");
+            quantityInput.type = "number";
+            quantityInput.min = "1";
+            quantityInput.value = "1";
+            quantityInput.className = "w-16 px-2 py-1 border rounded text-center text-sm";
+            quantityInput.style.width = "60px";
+            
+            // 儲存數量到 data attribute
+            quantityInput.addEventListener('change', function() {
+                container.dataset.quantity = this.value;
+            });
+            
+            quantityContainer.appendChild(quantityLabel);
+            quantityContainer.appendChild(quantityInput);
+            
+            container.appendChild(box);
+            container.appendChild(quantityContainer);
+
+            return { box: container, svg: id ? box.querySelector('svg') : null };
+        }
 
         function createLabelElement(name, id) {
             const box = document.createElement("div");
@@ -326,7 +573,33 @@
             // 創建外層容器（包含標籤和備註）
             const container = document.createElement("div");
             container.className = "flex flex-col items-center mb-4";
+            
+            // 添加數量編輯區域
+            const quantityContainer = document.createElement("div");
+            quantityContainer.className = "flex items-center space-x-2 mt-2 no-print";
+            quantityContainer.style.justifyContent = "center";
+            
+            const quantityLabel = document.createElement("label");
+            quantityLabel.className = "text-sm text-gray-600 font-medium";
+            quantityLabel.textContent = "數量：";
+            
+            const quantityInput = document.createElement("input");
+            quantityInput.type = "number";
+            quantityInput.min = "1";
+            quantityInput.value = "1";
+            quantityInput.className = "w-16 px-2 py-1 border rounded text-center text-sm";
+            quantityInput.style.width = "60px";
+            
+            // 儲存數量到 data attribute
+            quantityInput.addEventListener('change', function() {
+                container.dataset.quantity = this.value;
+            });
+            
+            quantityContainer.appendChild(quantityLabel);
+            quantityContainer.appendChild(quantityInput);
+            
             container.appendChild(box);
+            container.appendChild(quantityContainer);
 
             return { box: container, svg };
         }
@@ -337,6 +610,12 @@
             const size = document.getElementById("productSize").value.trim();
             const id = document.getElementById("productId").value.trim();
             const note = document.getElementById("productNote").value.trim();
+            const specNote = document.getElementById("productSpecNote").value.trim();
+            const quantity = parseInt(document.getElementById("productQuantity").value) || 1;
+            
+            // 取得產地選擇
+            const originRadio = document.querySelector('input[name="productOrigin"]:checked');
+            const origin = originRadio ? originRadio.value : '';
 
             if (!name || !id) {
                 alert("請輸入商品名稱和編號！");
@@ -353,6 +632,7 @@
             if (note) {
                 displayText += ` - ${note}`;
             }
+            // 規格備注不顯示在標籤上，只儲存資料
 
             if (displayText.length > 50) {
                 alert("商品名稱過長！最多支援50個字元。");
@@ -365,9 +645,34 @@
             if (note) {
                 box.dataset.note = note;
             }
+            if (specNote) {
+                box.dataset.specNote = specNote;
+            }
+            box.dataset.quantity = quantity;
+
+            // 設定數量輸入框的初始值
+            const quantityInput = box.querySelector('input[type="number"]');
+            if (quantityInput) {
+                quantityInput.value = quantity;
+            }
 
             document.getElementById("labelContainer").appendChild(box);
             JsBarcode(svg).init();
+
+            // 同時產生中標標籤
+            const { box: mediumBox, svg: mediumSvg } = createMediumLabelElement(name, style, size, specNote, id, origin);
+            mediumBox.dataset.quantity = quantity;
+            
+            // 設定中標籤數量輸入框的初始值
+            const mediumQuantityInput = mediumBox.querySelector('input[type="number"]');
+            if (mediumQuantityInput) {
+                mediumQuantityInput.value = quantity;
+            }
+            
+            document.getElementById("labelContainer").appendChild(mediumBox);
+            if (mediumSvg) {
+                JsBarcode(mediumSvg).init();
+            }
         }
 
         function clearLabels() {
@@ -376,6 +681,49 @@
                     document.getElementById("labelContainer").innerHTML = "";
                 }
             }
+        }
+
+        function showSmallLabels() {
+            const container = document.getElementById("labelContainer");
+            const labels = Array.from(container.children);
+            
+            labels.forEach(labelContainer => {
+                const labelBox = labelContainer.querySelector('.label-box');
+                const mediumLabelBox = labelContainer.querySelector('.medium-label-box');
+                
+                if (labelBox) {
+                    labelContainer.style.display = 'block';
+                }
+                if (mediumLabelBox) {
+                    labelContainer.style.display = 'none';
+                }
+            });
+        }
+
+        function showMediumLabels() {
+            const container = document.getElementById("labelContainer");
+            const labels = Array.from(container.children);
+            
+            labels.forEach(labelContainer => {
+                const labelBox = labelContainer.querySelector('.label-box');
+                const mediumLabelBox = labelContainer.querySelector('.medium-label-box');
+                
+                if (labelBox) {
+                    labelContainer.style.display = 'none';
+                }
+                if (mediumLabelBox) {
+                    labelContainer.style.display = 'block';
+                }
+            });
+        }
+
+        function showAllLabels() {
+            const container = document.getElementById("labelContainer");
+            const labels = Array.from(container.children);
+            
+            labels.forEach(labelContainer => {
+                labelContainer.style.display = 'block';
+            });
         }
 
         // 更新鍵盤事件
@@ -419,7 +767,17 @@
                         .filter(row => row)
                         .map(row => {
                             const columns = row.split(',');
-                            return [columns[0], columns[1], columns[2], columns[3], columns[4]]; // 取五列，包含備註
+                            // 處理規格備注欄位，將 \n 轉換為 <br>
+                            const specNote = columns[5] ? columns[5].replace(/\n/g, '<br>') : '';
+                            // 處理產地欄位
+                            const origin = columns[6] ? columns[6].trim().toLowerCase() : '';
+                            let originValue = '';
+                            if (origin.includes('大陸') || origin.includes('中國')) {
+                                originValue = 'china';
+                            } else if (origin.includes('台灣')) {
+                                originValue = 'taiwan';
+                            }
+                            return [columns[0], columns[1], columns[2], columns[3], columns[4], specNote, originValue, columns[7]]; // 取八列，產地在數量前面
                         })
                         .filter(row => row[0] && row[3]); // 確保至少有商品名稱和編號
                 } else if (file.name.toLowerCase().endsWith('.xlsx') || file.name.toLowerCase().endsWith('.xls')) {
@@ -435,8 +793,22 @@
                             String(row[1] || '').trim(),
                             String(row[2] || '').trim(),
                             String(row[3] || '').trim(),
-                            String(row[4] || '').trim()  // 加入備註欄位
-                        ]);
+                            String(row[4] || '').trim(),  // 備註欄位
+                            String(row[5] || '').trim().replace(/\n/g, '<br>'),  // 規格備注欄位，將 \n 轉換為 <br>
+                            String(row[6] || '').trim(),  // 產地欄位
+                            String(row[7] || '1').trim()   // 數量欄位
+                        ])
+                        .map(row => {
+                            // 處理產地欄位
+                            const origin = row[6].toLowerCase();
+                            let originValue = '';
+                            if (origin.includes('大陸') || origin.includes('中國')) {
+                                originValue = 'china';
+                            } else if (origin.includes('台灣')) {
+                                originValue = 'taiwan';
+                            }
+                            return [row[0], row[1], row[2], row[3], row[4], row[5], originValue, row[7]];
+                        });
                 }
 
                 // 移除標題行
@@ -449,7 +821,8 @@
                 document.getElementById("labelContainer").innerHTML = "";
                 
                 let errorMessages = [];
-                for (const [name, style, size, id, note] of rows) {
+                
+                for (const [name, style, size, id, note, specNote, origin, quantity] of rows) {
                     try {
                         let displayText = name;
                         if (style) {
@@ -461,6 +834,7 @@
                         if (note) {
                             displayText += ` - ${note}`;
                         }
+                        // 規格備注不顯示在標籤上，只儲存資料
                         
                         if (displayText.length > 50) {
                             errorMessages.push(`警告：商品 "${name}" 的完整文字過長（超過50字），已被跳過。`);
@@ -473,9 +847,34 @@
                         if (note) {
                             box.dataset.note = note;
                         }
+                        if (specNote) {
+                            box.dataset.specNote = specNote;
+                        }
+                        box.dataset.quantity = quantity || '1';
+                        
+                        // 設定數量輸入框的初始值
+                        const quantityInput = box.querySelector('input[type="number"]');
+                        if (quantityInput) {
+                            quantityInput.value = quantity || '1';
+                        }
                         
                         document.getElementById("labelContainer").appendChild(box);
                         JsBarcode(svg).init();
+
+                        // 同時產生中標標籤
+                        const { box: mediumBox, svg: mediumSvg } = createMediumLabelElement(name, style, size, specNote, id, origin);
+                        mediumBox.dataset.quantity = quantity || '1';
+                        
+                        // 設定中標籤數量輸入框的初始值
+                        const mediumQuantityInput = mediumBox.querySelector('input[type="number"]');
+                        if (mediumQuantityInput) {
+                            mediumQuantityInput.value = quantity || '1';
+                        }
+                        
+                        document.getElementById("labelContainer").appendChild(mediumBox);
+                        if (mediumSvg) {
+                            JsBarcode(mediumSvg).init();
+                        }
                     } catch (err) {
                         errorMessages.push(`處理資料時發生錯誤：${name} - ${id}，錯誤訊息：${err.message}`);
                     }
@@ -495,11 +894,11 @@
             const wb = XLSX.utils.book_new();
             
             const exampleData = [
-                ["商品名稱", "樣式", "尺寸", "商品編號", "備註"],
-                ["測試商品A", "黑色", "S", "TEST001", "這是備註A"],
-                ["測試商品B", "白色", "M", "TEST002", "這是備註B"],
-                ["商品名稱可以很長很長很長", "藍色", "L", "TEST003", ""],
-                ["商品名稱可以換行的說明文字", "紅色", "XL", "TEST004", "這是一個較長的備註說明"]
+                ["商品名稱", "樣式", "尺寸", "商品編號", "品名補充", "商品中標備註", "產地", "數量"],
+                ["測試商品A", "黑色", "S", "TEST001", "這是品名補充A", "商品中標備註A", "中國(大陸)", "5"],
+                ["測試商品B", "白色", "M", "TEST002", "這是品名補充B", "商品中標備註B", "台灣", "3"],
+                ["商品名稱可以很長很長很長", "藍色", "L", "TEST003", "", "商品中標備註C", "中國(大陸)", "1"],
+                ["商品名稱可以換行的說明文字", "紅色", "XL", "TEST004", "這是一個較長的品名補充說明", "這是一個較長的商品中標備註說明\n第二行說明\n第三行說明", "台灣", "2"]
             ];
             
             const ws = XLSX.utils.aoa_to_sheet(exampleData);
@@ -509,7 +908,10 @@
                 {wch: 15},  // 樣式欄寬
                 {wch: 15},  // 尺寸欄寬
                 {wch: 15},  // 商品編號欄寬
-                {wch: 30}   // 備註欄寬
+                {wch: 30},  // 備註欄寬
+                {wch: 30},  // 規格備注欄寬
+                {wch: 15},  // 產地欄寬
+                {wch: 10}   // 數量欄寬
             ];
             ws['!cols'] = wscols;
             
@@ -533,15 +935,14 @@
                     hotfixes: ["px_scaling"]
                 });
 
-                const scale = 3;  // 提高解析度
-                const width = Math.floor(226 * scale);
-                const height = Math.floor(151 * scale);
-
                 // 處理所有標籤
                 const labels = Array.from(container.children);
+                let pageCount = 0;
+                
                 for (let i = 0; i < labels.length; i++) {
                     const labelContainer = labels[i];
-                    const labelBox = labelContainer.querySelector('.label-box');
+                    const labelBox = labelContainer.querySelector('.label-box, .medium-label-box');
+                    const quantity = parseInt(labelContainer.dataset.quantity) || 1;
                     
                     // 暫時隱藏備註
                     const noteDiv = labelContainer.querySelector('.text-gray-600');
@@ -549,6 +950,112 @@
                         noteDiv.style.display = 'none';
                     }
 
+                    // 暫時隱藏刪除按鈕
+                    const deleteButton = labelBox.querySelector('button');
+                    if (deleteButton) {
+                        deleteButton.style.display = 'none';
+                    }
+
+                    // 確保元素樣式正確
+                    labelBox.style.margin = "0";
+                    labelBox.style.border = "none";
+                    labelBox.style.backgroundColor = "white";
+
+                    // 判斷標籤類型並設定相應的尺寸
+                    const isMediumLabel = labelBox.classList.contains('medium-label-box');
+                    const labelWidth = isMediumLabel ? 80 : LABEL_WIDTH;  // 80mm for medium label
+                    const labelHeight = isMediumLabel ? 100 : LABEL_HEIGHT; // 100mm for medium label
+                    const scale = 3;  // 提高解析度
+                    const width = Math.floor((isMediumLabel ? 302 : 226) * scale);
+                    const height = Math.floor((isMediumLabel ? 378 : 151) * scale);
+
+                    // 生成高解析度圖片
+                    const dataUrl = await domtoimage.toPng(labelBox, {
+                        width: width,
+                        height: height,
+                        style: {
+                            margin: '0',
+                            padding: isMediumLabel ? '5mm' : '3mm',
+                            transform: `scale(${scale})`,
+                            'transform-origin': 'top left',
+                            '-webkit-transform-origin': 'top left'
+                        },
+                        quality: 1.0,
+                        height: height,
+                        width: width
+                    });
+
+                    // 恢復備註顯示
+                    if (noteDiv) {
+                        noteDiv.style.display = '';
+                    }
+
+                    // 恢復刪除按鈕顯示
+                    if (deleteButton) {
+                        deleteButton.style.display = '';
+                    }
+
+                    // 根據數量重複產生頁面
+                    for (let j = 0; j < quantity; j++) {
+                        // 如果不是第一頁，添加新頁面
+                        if (pageCount > 0) {
+                            pdf.addPage([labelWidth, labelHeight], 'landscape');
+                        }
+
+                        // 添加圖片到 PDF
+                        pdf.addImage(
+                            dataUrl,
+                            'PNG',
+                            0,
+                            0,
+                            labelWidth,
+                            labelHeight,
+                            undefined,
+                            'NONE'
+                        );
+                        
+                        pageCount++;
+                    }
+                }
+
+                pdf.save('labels.pdf');
+
+            } catch (error) {
+                alert("PDF產生失敗：" + error.message);
+                console.error(error);
+            }
+        }
+
+        async function exportSmallLabelsPDF() {
+            const container = document.getElementById("labelContainer");
+            const smallLabels = Array.from(container.children).filter(labelContainer => 
+                labelContainer.querySelector('.label-box')
+            );
+            
+            if (smallLabels.length === 0) {
+                alert("沒有條碼標籤可以匯出！");
+                return;
+            }
+
+            try {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({
+                    orientation: 'landscape',
+                    unit: 'mm',
+                    format: [LABEL_WIDTH, LABEL_HEIGHT],
+                    hotfixes: ["px_scaling"]
+                });
+
+                const scale = 3;  // 提高解析度
+                const width = Math.floor(226 * scale);
+                const height = Math.floor(151 * scale);
+
+                let pageCount = 0;
+                for (let i = 0; i < smallLabels.length; i++) {
+                    const labelContainer = smallLabels[i];
+                    const labelBox = labelContainer.querySelector('.label-box');
+                    const quantity = parseInt(labelContainer.dataset.quantity) || 1;
+                    
                     // 暫時隱藏刪除按鈕
                     const deleteButton = labelBox.querySelector('button');
                     if (deleteButton) {
@@ -576,38 +1083,131 @@
                         width: width
                     });
 
-                    // 恢復備註顯示
-                    if (noteDiv) {
-                        noteDiv.style.display = '';
+                    // 恢復刪除按鈕顯示
+                    if (deleteButton) {
+                        deleteButton.style.display = '';
                     }
+
+                    // 根據數量重複產生頁面
+                    for (let j = 0; j < quantity; j++) {
+                        // 如果不是第一頁，添加新頁面
+                        if (pageCount > 0) {
+                            pdf.addPage([LABEL_WIDTH, LABEL_HEIGHT], 'landscape');
+                        }
+
+                        // 添加圖片到 PDF
+                        pdf.addImage(
+                            dataUrl,
+                            'PNG',
+                            0,
+                            0,
+                            LABEL_WIDTH,
+                            LABEL_HEIGHT,
+                            undefined,
+                            'NONE'
+                        );
+                        
+                        pageCount++;
+                    }
+                }
+
+                pdf.save('small_labels.pdf');
+
+            } catch (error) {
+                alert("條碼標籤PDF產生失敗：" + error.message);
+                console.error(error);
+            }
+        }
+
+        async function exportMediumLabelsPDF() {
+            const container = document.getElementById("labelContainer");
+            const mediumLabels = Array.from(container.children).filter(labelContainer => 
+                labelContainer.querySelector('.medium-label-box')
+            );
+            
+            if (mediumLabels.length === 0) {
+                alert("沒有中標籤可以匯出！");
+                return;
+            }
+
+            try {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({
+                    orientation: 'landscape',
+                    unit: 'mm',
+                    format: [80, 100],
+                    hotfixes: ["px_scaling"]
+                });
+
+                const scale = 3;  // 提高解析度
+                const width = Math.floor(302 * scale);
+                const height = Math.floor(378 * scale);
+
+                let pageCount = 0;
+                for (let i = 0; i < mediumLabels.length; i++) {
+                    const labelContainer = mediumLabels[i];
+                    const labelBox = labelContainer.querySelector('.medium-label-box');
+                    const quantity = parseInt(labelContainer.dataset.quantity) || 1;
+                    
+                    // 暫時隱藏刪除按鈕
+                    const deleteButton = labelBox.querySelector('button');
+                    if (deleteButton) {
+                        deleteButton.style.display = 'none';
+                    }
+
+                    // 確保元素樣式正確
+                    labelBox.style.margin = "0";
+                    labelBox.style.border = "none";
+                    labelBox.style.backgroundColor = "white";
+
+                    // 生成高解析度圖片
+                    const dataUrl = await domtoimage.toPng(labelBox, {
+                        width: width,
+                        height: height,
+                        style: {
+                            margin: '0',
+                            padding: '5mm',
+                            transform: `scale(${scale})`,
+                            'transform-origin': 'top left',
+                            '-webkit-transform-origin': 'top left'
+                        },
+                        quality: 1.0,
+                        height: height,
+                        width: width
+                    });
 
                     // 恢復刪除按鈕顯示
                     if (deleteButton) {
                         deleteButton.style.display = '';
                     }
 
-                    // 如果不是第一頁，添加新頁面
-                    if (i > 0) {
-                        pdf.addPage([LABEL_WIDTH, LABEL_HEIGHT], 'landscape');
-                    }
+                    // 根據數量重複產生頁面
+                    for (let j = 0; j < quantity; j++) {
+                        // 如果不是第一頁，添加新頁面
+                        if (pageCount > 0) {
+                            pdf.addPage([80, 100], 'landscape');
+                        }
 
-                    // 添加圖片到 PDF
-                    pdf.addImage(
-                        dataUrl,
-                        'PNG',
-                        0,
-                        0,
-                        LABEL_WIDTH,
-                        LABEL_HEIGHT,
-                        undefined,
-                        'NONE'
-                    );
+                        // 添加圖片到 PDF
+                        pdf.addImage(
+                            dataUrl,
+                            'PNG',
+                            0,
+                            0,
+                            80,
+                            100,
+                            undefined,
+                            'NONE'
+                        );
+                        
+                        pageCount++;
+                    }
                 }
 
-                pdf.save('labels.pdf');
+                pdf.save('medium_labels.pdf');
 
             } catch (error) {
-                alert("PDF產生失敗：" + error.message);
+                alert("中標籤PDF產生失敗：" + error.message);
                 console.error(error);
             }
         }
@@ -622,11 +1222,25 @@
 
             const labels = Array.from(container.children).map(container => {
                 const labelBox = container.querySelector('.label-box');
+                const mediumLabelBox = container.querySelector('.medium-label-box');
                 const note = container.dataset.note || '';
+                const specNote = container.dataset.specNote || '';
+                const quantity = container.dataset.quantity || '1';
+                
+                // 取得商品編號（從小標籤或中標籤的條碼）
+                let productId = '';
+                if (labelBox && labelBox.querySelector('svg')) {
+                    productId = labelBox.querySelector('svg').getAttribute('jsbarcode-value');
+                } else if (mediumLabelBox && mediumLabelBox.querySelector('svg')) {
+                    productId = mediumLabelBox.querySelector('svg').getAttribute('jsbarcode-value');
+                }
+                
                 return [
-                    labelBox.querySelector('.text-center').innerText,
-                    labelBox.querySelector('svg').getAttribute('jsbarcode-value'),
-                    note
+                    labelBox ? labelBox.querySelector('.text-center').innerText : '',
+                    productId,
+                    note,
+                    specNote,
+                    quantity
                 ];
             });
 
@@ -676,13 +1290,39 @@
                         document.getElementById("labelContainer").innerHTML = "";
                         decodedData.forEach(item => {
                             if (Array.isArray(item)) {
-                                const [name, id, note] = item;
+                                const [name, id, note, specNote, quantity] = item;
                                 const { box, svg } = createLabelElement(name, id);
                                 if (note) {
                                     box.dataset.note = note;
                                 }
+                                if (specNote) {
+                                    box.dataset.specNote = specNote;
+                                }
+                                box.dataset.quantity = quantity || '1';
+                                
+                                // 設定數量輸入框的初始值
+                                const quantityInput = box.querySelector('input[type="number"]');
+                                if (quantityInput) {
+                                    quantityInput.value = quantity || '1';
+                                }
+                                
                                 document.getElementById("labelContainer").appendChild(box);
                                 JsBarcode(svg).init();
+                                
+                                // 同時產生中標標籤
+                                const { box: mediumBox, svg: mediumSvg } = createMediumLabelElement(name, '', '', specNote, id);
+                                mediumBox.dataset.quantity = quantity || '1';
+                                
+                                // 設定中標籤數量輸入框的初始值
+                                const mediumQuantityInput = mediumBox.querySelector('input[type="number"]');
+                                if (mediumQuantityInput) {
+                                    mediumQuantityInput.value = quantity || '1';
+                                }
+                                
+                                document.getElementById("labelContainer").appendChild(mediumBox);
+                                if (mediumSvg) {
+                                    JsBarcode(mediumSvg).init();
+                                }
                             }
                         });
                     }
@@ -697,6 +1337,16 @@
 
         // 在頁面載入時檢查 URL 參數
         window.addEventListener('load', loadFromURL);
+
+        // 監聽數量輸入框的變化，同步到 data attribute
+        document.addEventListener('input', function(e) {
+            if (e.target.type === 'number' && e.target.closest('#labelContainer')) {
+                const container = e.target.closest('.flex.flex-col');
+                if (container) {
+                    container.dataset.quantity = e.target.value;
+                }
+            }
+        });
 
         // 添加版本資訊到頁面
         document.addEventListener('DOMContentLoaded', function() {
@@ -751,7 +1401,7 @@
                 return;
             }
             list.innerHTML = '<div><label><input type="checkbox" id="selectAllProducts" onchange="toggleSelectAllProducts(this)"> 全選</label></div>' +
-                pageProducts.map((p, i) => `<div><label><input type="checkbox" class="productCheckbox" data-index="${startIdx + i}"> ${p.name}（${p.vendor}） - ${p.style} - ${p.size} - ${p.id} ${p.note?(' - '+p.note):''}</label></div>`).join('');
+                pageProducts.map((p, i) => `<div><label><input type="checkbox" class="productCheckbox" data-index="${startIdx + i}"> ${p.name}（${p.vendor}） - ${p.style} - ${p.size} - ${p.id} ${p.note?(' - '+p.note):''} ${p.specNote?(' - '+p.specNote):''}</label></div>`).join('');
             // 分頁按鈕
             const pagination = document.getElementById('pagination');
             let html = '';
@@ -804,8 +1454,31 @@
                     [p.name, p.style, p.size, p.note].filter(Boolean).join(' - '),
                     p.id
                 );
+                box.dataset.quantity = '1';
+                
+                // 設定數量輸入框的初始值
+                const quantityInput = box.querySelector('input[type="number"]');
+                if (quantityInput) {
+                    quantityInput.value = '1';
+                }
+                
                 container.appendChild(box);
                 JsBarcode(svg).init();
+
+                // 同時產生中標標籤
+                const { box: mediumBox, svg: mediumSvg } = createMediumLabelElement(p.name, p.style, p.size, p.specNote, p.id, p.origin);
+                mediumBox.dataset.quantity = '1';
+                
+                // 設定中標籤數量輸入框的初始值
+                const mediumQuantityInput = mediumBox.querySelector('input[type="number"]');
+                if (mediumQuantityInput) {
+                    mediumQuantityInput.value = '1';
+                }
+                
+                container.appendChild(mediumBox);
+                if (mediumSvg) {
+                    JsBarcode(mediumSvg).init();
+                }
             });
             alert('已將選取商品新增到標籤預覽區，請點擊匯出PDF或分享連結！');
         }
@@ -820,11 +1493,11 @@
         function downloadProductDatabaseTemplate() {
             const wb = XLSX.utils.book_new();
             const exampleData = [
-                ["商品名稱", "廠商名稱", "樣式", "尺寸", "商品編號", "備註"],
-                ["商品A", "廠商甲", "紅色", "L", "PROD001", "這是備註A"],
-                ["商品B", "廠商乙", "藍色", "M", "PROD002", "這是備註B"],
-                ["商品C", "廠商甲", "綠色", "S", "PROD003", ""],
-                ["商品D", "廠商丙", "黑色", "XL", "PROD004", "特價商品"]
+                ["商品名稱", "廠商名稱", "樣式", "尺寸", "商品編號", "品名補充", "商品中標備註", "產地"],
+                ["商品A", "廠商甲", "紅色", "L", "PROD001", "這是品名補充A", "商品中標備註A", "中國(大陸)"],
+                ["商品B", "廠商乙", "藍色", "M", "PROD002", "這是品名補充B", "商品中標備註B", "台灣"],
+                ["商品C", "廠商甲", "綠色", "S", "PROD003", "", "商品中標備註C", "中國(大陸)"],
+                ["商品D", "廠商丙", "黑色", "XL", "PROD004", "特價商品", "商品中標備註D\n第二行說明\n第三行說明", "台灣"]
             ];
             const ws = XLSX.utils.aoa_to_sheet(exampleData);
             const wscols = [
@@ -833,7 +1506,9 @@
                 {wch: 10},  // 樣式
                 {wch: 10},  // 尺寸
                 {wch: 15},  // 商品編號
-                {wch: 20}   // 備註
+                {wch: 20},  // 備註
+                {wch: 20},  // 規格備注
+                {wch: 15}   // 產地
             ];
             ws['!cols'] = wscols;
             XLSX.utils.book_append_sheet(wb, ws, "商品資料範本");
@@ -844,6 +1519,96 @@
             let db = [];
             try { db = JSON.parse(localStorage.getItem('productDatabase')||'[]'); } catch(e){}
             return db;
+        }
+
+        async function importProductDatabase(event, permanent = false) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            try {
+                let rows = [];
+                if (file.name.toLowerCase().endsWith('.csv')) {
+                    const text = await file.text();
+                    rows = text.split('\n')
+                        .map(row => row.trim())
+                        .filter(row => row)
+                        .map(row => {
+                            const columns = row.split(',');
+                            // 處理規格備注欄位，將 \n 轉換為 <br>
+                            const specNote = columns[6] ? columns[6].replace(/\n/g, '<br>') : '';
+                            // 處理產地欄位
+                            const origin = columns[7] ? columns[7].trim().toLowerCase() : '';
+                            let originValue = '';
+                            if (origin.includes('大陸') || origin.includes('中國')) {
+                                originValue = 'china';
+                            } else if (origin.includes('台灣')) {
+                                originValue = 'taiwan';
+                            }
+                            return [columns[0], columns[1], columns[2], columns[3], columns[4], columns[5], specNote, originValue]; // 取八列，包含產地
+                        })
+                        .filter(row => row[0] && row[4]); // 確保至少有商品名稱和編號
+                } else if (file.name.toLowerCase().endsWith('.xlsx') || file.name.toLowerCase().endsWith('.xls')) {
+                    const data = await file.arrayBuffer();
+                    const workbook = XLSX.read(data);
+                    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                    
+                    rows = jsonData
+                        .filter(row => Array.isArray(row) && row.length >= 5 && row[0] && row[4])
+                        .map(row => [
+                            String(row[0] || '').trim(),
+                            String(row[1] || '').trim(),
+                            String(row[2] || '').trim(),
+                            String(row[3] || '').trim(),
+                            String(row[4] || '').trim(),
+                            String(row[5] || '').trim(),
+                            String(row[6] || '').trim().replace(/\n/g, '<br>'),  // 規格備注欄位，將 \n 轉換為 <br>
+                            String(row[7] || '').trim()  // 產地欄位
+                        ])
+                        .map(row => {
+                            // 處理產地欄位
+                            const origin = row[7].toLowerCase();
+                            let originValue = '';
+                            if (origin.includes('大陸') || origin.includes('中國')) {
+                                originValue = 'china';
+                            } else if (origin.includes('台灣')) {
+                                originValue = 'taiwan';
+                            }
+                            return [row[0], row[1], row[2], row[3], row[4], row[5], row[6], originValue];
+                        });
+                }
+
+                // 移除標題行
+                if (rows.length > 0 && 
+                    (rows[0][0].includes("商品名稱") || 
+                     rows[0][4].includes("商品編號"))) {
+                    rows.shift();
+                }
+
+                const products = rows.map(([name, vendor, style, size, id, note, specNote, origin]) => ({
+                    name: name,
+                    vendor: vendor,
+                    style: style,
+                    size: size,
+                    id: id,
+                    note: note,
+                    specNote: specNote,
+                    origin: origin
+                }));
+
+                if (permanent) {
+                    localStorage.setItem('productDatabase', JSON.stringify(products));
+                    alert(`已成功匯入 ${products.length} 筆商品資料到資料庫！`);
+                }
+
+                // 更新UI
+                updateVendorAutocompleteUI();
+                updateProductListUI();
+
+            } catch (error) {
+                console.error("資料庫匯入錯誤：", error);
+                alert("資料庫匯入失敗：" + (error.message || "請確認檔案格式是否正確。"));
+            }
         }
     </script>
 </body>
