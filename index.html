@@ -310,26 +310,20 @@
 
             // 公司資訊
             const companyInfoDiv = document.createElement("div");
-            companyInfoDiv.style.fontSize = "10px";
-            companyInfoDiv.style.lineHeight = "1.2";
+            companyInfoDiv.style.fontSize = "14px";
+            companyInfoDiv.style.lineHeight = "1.4";
             companyInfoDiv.style.textAlign = "left";
-            companyInfoDiv.style.marginBottom = "2mm";
+            companyInfoDiv.style.marginBottom = "8mm";
+            companyInfoDiv.style.wordBreak = "break-all";
+            companyInfoDiv.style.wordWrap = "break-word";
+            companyInfoDiv.style.whiteSpace = "pre-wrap";
             companyInfoDiv.style.backgroundColor = "transparent";
-            
-            let originText = '';
-            if (origin === 'china') {
-                originText = '中國';
-            } else if (origin === 'taiwan') {
-                originText = '台灣';
-            } else {
-                originText = origin;
-            }
             
             companyInfoDiv.innerHTML = `
                 公司名稱：台灣迪品有限公司<br>
                 公司電話：0285123556<br>
                 公司地址：新北市五股區五權五路15號6樓<br>
-                商品標籤：${originText}
+                商品標籤：${origin || ''}
             `;
             
             leftContainer.appendChild(companyInfoDiv);
@@ -346,9 +340,9 @@
             // 1. 商品名稱
             const nameDiv = document.createElement("div");
             nameDiv.className = "font-bold text-left";
-            nameDiv.style.fontSize = "16px";
+            nameDiv.style.fontSize = "18px";
             nameDiv.style.lineHeight = "1.4";
-            nameDiv.style.marginBottom = "4mm";
+            nameDiv.style.marginBottom = "8mm";
             nameDiv.style.wordBreak = "break-all";
             nameDiv.style.wordWrap = "break-word";
             nameDiv.style.whiteSpace = "pre-wrap";
@@ -358,9 +352,9 @@
             // 2. 樣式尺寸
             const styleSizeDiv = document.createElement("div");
             styleSizeDiv.className = "text-left";
-            styleSizeDiv.style.fontSize = "14px";
+            styleSizeDiv.style.fontSize = "16px";
             styleSizeDiv.style.lineHeight = "1.4";
-            styleSizeDiv.style.marginBottom = "4mm";
+            styleSizeDiv.style.marginBottom = "8mm";
             styleSizeDiv.style.wordBreak = "break-all";
             styleSizeDiv.style.wordWrap = "break-word";
             styleSizeDiv.style.whiteSpace = "pre-wrap";
@@ -379,7 +373,7 @@
             // 3. 規格備注
             const specNoteDiv = document.createElement("div");
             specNoteDiv.className = "text-left";
-            specNoteDiv.style.fontSize = "12px";
+            specNoteDiv.style.fontSize = "14px";
             specNoteDiv.style.lineHeight = "1.4";
             specNoteDiv.style.wordBreak = "break-all";
             specNoteDiv.style.wordWrap = "break-word";
@@ -407,6 +401,8 @@
                 barcodeContainer.style.justifyContent = "flex-end";
                 barcodeContainer.style.alignItems = "center";
                 barcodeContainer.style.backgroundColor = "transparent";
+
+
 
                 // 條碼外層容器
                 const barcodeWrapper = document.createElement("div");
