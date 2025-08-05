@@ -299,24 +299,6 @@
             contentContainer.style.alignItems = "flex-start";
             contentContainer.style.backgroundColor = "transparent";
 
-            // 公司資訊
-            const companyInfoDiv = document.createElement("div");
-            companyInfoDiv.style.fontSize = "14px";
-            companyInfoDiv.style.lineHeight = "1.4";
-            companyInfoDiv.style.textAlign = "left";
-            companyInfoDiv.style.marginBottom = "8mm";
-            companyInfoDiv.style.wordBreak = "break-all";
-            companyInfoDiv.style.wordWrap = "break-word";
-            companyInfoDiv.style.whiteSpace = "pre-wrap";
-            companyInfoDiv.style.backgroundColor = "transparent";
-            
-            companyInfoDiv.innerHTML = `
-                公司名稱：台灣迪品有限公司<br>
-                公司電話：0285123556<br>
-                公司地址：新北市五股區五權五路15號6樓<br>
-                商品標籤：${origin || ''}
-            `;
-
             // 1. 商品名稱
             const nameDiv = document.createElement("div");
             nameDiv.className = "font-bold text-left";
@@ -332,9 +314,8 @@
             // 2. 樣式尺寸
             const styleSizeDiv = document.createElement("div");
             styleSizeDiv.className = "text-left";
-            styleSizeDiv.style.fontSize = "16px";
+            styleSizeDiv.style.fontSize = "14px";
             styleSizeDiv.style.lineHeight = "1.4";
-            styleSizeDiv.style.marginBottom = "8mm";
             styleSizeDiv.style.wordBreak = "break-all";
             styleSizeDiv.style.wordWrap = "break-word";
             styleSizeDiv.style.whiteSpace = "pre-wrap";
@@ -361,10 +342,29 @@
             specNoteDiv.style.backgroundColor = "transparent";
             specNoteDiv.innerHTML = (specNote || "").replace(/<br>/gi, '<br>');
 
-            contentContainer.appendChild(companyInfoDiv);
             contentContainer.appendChild(nameDiv);
             contentContainer.appendChild(styleSizeDiv);
             contentContainer.appendChild(specNoteDiv);
+            
+            // 如果有商品標籤資訊，添加公司資訊到規格備注後面
+            if (origin) {
+                const companyInfoDiv = document.createElement("div");
+                companyInfoDiv.className = "text-left";
+                companyInfoDiv.style.fontSize = "14px";
+                companyInfoDiv.style.lineHeight = "1.4";
+                companyInfoDiv.style.backgroundColor = "transparent";
+                companyInfoDiv.style.wordBreak = "break-all";
+                companyInfoDiv.style.wordWrap = "break-word";
+                companyInfoDiv.style.whiteSpace = "pre-wrap";
+                
+                companyInfoDiv.innerHTML = `
+公司名稱：台灣迪品有限公司<br>
+公司電話：0285123556<br>
+公司地址：新北市五股區五權五路15號6樓<br>
+商品標籤：${origin}`;
+                
+                contentContainer.appendChild(companyInfoDiv);
+            }
             
             // 添加條碼容器
             if (id) {
@@ -379,6 +379,8 @@
                 barcodeContainer.style.justifyContent = "flex-end";
                 barcodeContainer.style.alignItems = "center";
                 barcodeContainer.style.backgroundColor = "transparent";
+
+
 
                 // 條碼外層容器
                 const barcodeWrapper = document.createElement("div");
@@ -521,6 +523,8 @@
 
             nameContainer.appendChild(nameDiv);
 
+
+
             // 條碼容器
             const barcodeContainer = document.createElement("div");
             barcodeContainer.style.position = "absolute";
@@ -632,7 +636,7 @@
                 return;
             }
 
-            const { box, svg } = createLabelElement(displayText, id);
+                                    const { box, svg } = createLabelElement(displayText, id);
             
             // 如果有備註，將其儲存在 data attribute 中
             if (note) {
@@ -1453,7 +1457,8 @@
             selected.forEach(p => {
                 const { box, svg } = createLabelElement(
                     [p.name, p.style, p.size, p.note].filter(Boolean).join(' - '),
-                    p.id
+                    p.id,
+                    p.origin
                 );
                 box.dataset.quantity = '1';
                 
