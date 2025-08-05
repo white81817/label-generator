@@ -189,7 +189,7 @@
                         <label class="block text-gray-700 text-sm font-bold mb-2">CSV檔案匯入</label>
                         <input type="file" id="csvFile" accept=".csv,.xlsx,.xls" 
                                class="custom-file-input w-full mb-4">
-                        <p class="text-sm text-gray-500 mt-1">支援格式：CSV 或 Excel (商品名稱,樣式,尺寸,商品編號,品名補充,商品中標備註,產地,數量)</p>
+                        <p class="text-sm text-gray-500 mt-1">支援格式：CSV 或 Excel (商品名稱,樣式,尺寸,商品編號,品名補充,規格備註,商品標籤,數量)</p>
                         <div class="flex items-center space-x-2 mt-2">
                             <button onclick="downloadExampleFile()" 
                                     class="text-blue-500 hover:text-blue-700 text-sm flex items-center">
@@ -894,11 +894,11 @@
             const wb = XLSX.utils.book_new();
             
             const exampleData = [
-                ["商品名稱", "樣式", "尺寸", "商品編號", "品名補充", "商品中標備註", "產地(放Usale商品標籤資料)", "數量"],
-                ["測試商品A", "黑色", "S", "TEST001", "這是品名補充A", "商品中標備註A", "不需更動", "5"],
-                ["測試商品B", "白色", "M", "TEST002", "這是品名補充B", "商品中標備註B", "不需更動", "3"],
-                ["商品名稱可以很長很長很長", "藍色", "L", "TEST003", "", "商品中標備註C", "不需更動", "1"],
-                ["商品名稱可以換行的說明文字", "紅色", "XL", "TEST004", "這是一個較長的品名補充說明", "這是一個較長的商品中標備註說明\n第二行說明\n第三行說明", "不需更動", "2"]
+                ["商品名稱", "樣式", "尺寸", "商品編號", "品名補充", "規格備註", "商品標籤", "數量"],
+                ["測試商品A", "黑色", "S", "TEST001", "這是品名補充A", "規格備註A", "不需更動", "5"],
+                ["測試商品B", "白色", "M", "TEST002", "這是品名補充B", "規格備註B", "不需更動", "3"],
+                ["商品名稱可以很長很長很長", "藍色", "L", "TEST003", "", "規格備註C", "不需更動", "1"],
+                ["商品名稱可以換行的說明文字", "紅色", "XL", "TEST004", "這是一個較長的品名補充說明", "這是一個較長的規格備註說明\n第二行說明\n第三行說明", "不需更動", "2"]
             ];
             
             const ws = XLSX.utils.aoa_to_sheet(exampleData);
@@ -909,8 +909,8 @@
                 {wch: 15},  // 尺寸欄寬
                 {wch: 15},  // 商品編號欄寬
                 {wch: 30},  // 備註欄寬
-                {wch: 30},  // 規格備注欄寬
-                {wch: 15},  // 產地欄寬
+                {wch: 30},  // 規格備註欄寬
+                {wch: 15},  // 商品標籤欄寬
                 {wch: 10}   // 數量欄寬
             ];
             ws['!cols'] = wscols;
@@ -1493,11 +1493,11 @@
         function downloadProductDatabaseTemplate() {
             const wb = XLSX.utils.book_new();
             const exampleData = [
-                ["商品名稱", "廠商名稱", "樣式", "尺寸", "商品編號", "品名補充", "商品中標備註", "產地(放Usale商品標籤資料)"],
-                ["商品A", "廠商甲", "紅色", "L", "PROD001", "這是品名補充A", "商品中標備註A", "中國"],
-                ["商品B", "廠商乙", "藍色", "M", "PROD002", "這是品名補充B", "商品中標備註B", "台灣"],
-                ["商品C", "廠商甲", "綠色", "S", "PROD003", "", "商品中標備註C", "照usale不需更動"],
-                ["商品D", "廠商丙", "黑色", "XL", "PROD004", "特價商品", "商品中標備註D\n第二行說明\n第三行說明", "台灣"]
+                ["商品名稱", "廠商名稱", "樣式", "尺寸", "商品編號", "品名補充", "規格備註", "商品標籤"],
+                ["商品A", "廠商甲", "紅色", "L", "PROD001", "這是品名補充A", "規格備註A", "中國"],
+                ["商品B", "廠商乙", "藍色", "M", "PROD002", "這是品名補充B", "規格備註B", "台灣"],
+                ["商品C", "廠商甲", "綠色", "S", "PROD003", "", "規格備註C", "照usale不需更動"],
+                ["商品D", "廠商丙", "黑色", "XL", "PROD004", "特價商品", "規格備註D\n第二行說明\n第三行說明", "台灣"]
             ];
             const ws = XLSX.utils.aoa_to_sheet(exampleData);
             const wscols = [
@@ -1507,8 +1507,8 @@
                 {wch: 10},  // 尺寸
                 {wch: 15},  // 商品編號
                 {wch: 20},  // 備註
-                {wch: 20},  // 規格備注
-                {wch: 15}   // 產地
+                {wch: 20},  // 規格備註
+                {wch: 15}   // 商品標籤
             ];
             ws['!cols'] = wscols;
             XLSX.utils.book_append_sheet(wb, ws, "商品資料範本");
