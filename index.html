@@ -153,7 +153,7 @@
                                rows="2"></textarea>
                     </div>
                     <div>
-                        <label class="block text-gray-700 text-sm font-bold mb-2">商品標籤 (選填)</label>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">產地(usale不動)(選填)</label>
                         <div class="flex space-x-4">
                             <label class="flex items-center">
                                 <input type="radio" name="productOrigin" value="china" class="mr-2">
@@ -189,7 +189,7 @@
                         <label class="block text-gray-700 text-sm font-bold mb-2">CSV檔案匯入</label>
                         <input type="file" id="csvFile" accept=".csv,.xlsx,.xls" 
                                class="custom-file-input w-full mb-4">
-                        <p class="text-sm text-gray-500 mt-1">支援格式：CSV 或 Excel (商品名稱,樣式,尺寸,商品編號,品名補充,商品中標備註,商品標籤,數量)</p>
+                        <p class="text-sm text-gray-500 mt-1">支援格式：CSV 或 Excel (商品名稱,樣式,尺寸,商品編號,品名補充,商品中標備註,產地,數量)</p>
                         <div class="flex items-center space-x-2 mt-2">
                             <button onclick="downloadExampleFile()" 
                                     class="text-blue-500 hover:text-blue-700 text-sm flex items-center">
@@ -314,8 +314,9 @@
             // 2. 樣式尺寸
             const styleSizeDiv = document.createElement("div");
             styleSizeDiv.className = "text-left";
-            styleSizeDiv.style.fontSize = "14px";
+            styleSizeDiv.style.fontSize = "16px";
             styleSizeDiv.style.lineHeight = "1.4";
+            styleSizeDiv.style.marginBottom = "8mm";
             styleSizeDiv.style.wordBreak = "break-all";
             styleSizeDiv.style.wordWrap = "break-word";
             styleSizeDiv.style.whiteSpace = "pre-wrap";
@@ -346,26 +347,6 @@
             contentContainer.appendChild(styleSizeDiv);
             contentContainer.appendChild(specNoteDiv);
             
-            // 如果有商品標籤資訊，添加公司資訊到規格備注後面
-            if (origin) {
-                const companyInfoDiv = document.createElement("div");
-                companyInfoDiv.className = "text-left";
-                companyInfoDiv.style.fontSize = "14px";
-                companyInfoDiv.style.lineHeight = "1.4";
-                companyInfoDiv.style.backgroundColor = "transparent";
-                companyInfoDiv.style.wordBreak = "break-all";
-                companyInfoDiv.style.wordWrap = "break-word";
-                companyInfoDiv.style.whiteSpace = "pre-wrap";
-                
-                companyInfoDiv.innerHTML = `
-公司名稱：台灣迪品有限公司<br>
-公司電話：0285123556<br>
-公司地址：新北市五股區五權五路15號6樓<br>
-商品標籤：${origin}`;
-                
-                contentContainer.appendChild(companyInfoDiv);
-            }
-            
             // 添加條碼容器
             if (id) {
                 const barcodeContainer = document.createElement("div");
@@ -380,7 +361,24 @@
                 barcodeContainer.style.alignItems = "center";
                 barcodeContainer.style.backgroundColor = "transparent";
 
-
+                // 如果有商品標籤資訊，添加公司資訊
+                if (origin) {
+                    const companyInfoDiv = document.createElement("div");
+                    companyInfoDiv.style.fontSize = "10px";
+                    companyInfoDiv.style.lineHeight = "1.2";
+                    companyInfoDiv.style.textAlign = "center";
+                    companyInfoDiv.style.marginBottom = "2mm";
+                    companyInfoDiv.style.backgroundColor = "transparent";
+                    
+                    companyInfoDiv.innerHTML = `
+                        公司名稱：台灣迪品有限公司<br>
+                        公司電話：0285123556<br>
+                        公司地址：新北市五股區五權五路15號6樓<br>
+                        產地：${origin}
+                    `;
+                    
+                    barcodeContainer.appendChild(companyInfoDiv);
+                }
 
                 // 條碼外層容器
                 const barcodeWrapper = document.createElement("div");
@@ -523,8 +521,6 @@
 
             nameContainer.appendChild(nameDiv);
 
-
-
             // 條碼容器
             const barcodeContainer = document.createElement("div");
             barcodeContainer.style.position = "absolute";
@@ -636,7 +632,7 @@
                 return;
             }
 
-                                    const { box, svg } = createLabelElement(displayText, id);
+            const { box, svg } = createLabelElement(displayText, id);
             
             // 如果有備註，將其儲存在 data attribute 中
             if (note) {
@@ -766,19 +762,19 @@
                             const columns = row.split(',');
                             // 處理規格備注欄位，將 \n 轉換為 <br>
                             const specNote = columns[5] ? columns[5].replace(/\n/g, '<br>') : '';
-                            // 處理商品標籤欄位
+                            // 處理產地欄位
                             const origin = columns[6] ? columns[6].trim() : '';
                             let originValue = '';
-                            if (origin.includes('大陸') || origin.includes('中國')) {
+                            if (origin.includes('大陸') || origin.includes('中國') || origin.toLowerCase().includes('china')) {
                                 originValue = '中國';
-                            } else if (origin.includes('台灣')) {
+                            } else if (origin.includes('台灣') || origin.toLowerCase().includes('taiwan')) {
                                 originValue = '台灣';
                             } else if (origin.includes('usale') || origin.includes('不需更動')) {
                                 originValue = '照usale不需更動';
                             } else {
                                 originValue = origin; // 保留原始值
                             }
-                            return [columns[0], columns[1], columns[2], columns[3], columns[4], specNote, originValue, columns[7]]; // 取八列，商品標籤在數量前面
+                            return [columns[0], columns[1], columns[2], columns[3], columns[4], specNote, originValue, columns[7]]; // 取八列，產地在數量前面
                         })
                         .filter(row => row[0] && row[3]); // 確保至少有商品名稱和編號
                 } else if (file.name.toLowerCase().endsWith('.xlsx') || file.name.toLowerCase().endsWith('.xls')) {
@@ -796,16 +792,16 @@
                             String(row[3] || '').trim(),
                             String(row[4] || '').trim(),  // 備註欄位
                             String(row[5] || '').trim().replace(/\n/g, '<br>'),  // 規格備注欄位，將 \n 轉換為 <br>
-                            String(row[6] || '').trim(),  // 商品標籤欄位
+                            String(row[6] || '').trim(),  // 產地欄位
                             String(row[7] || '1').trim()   // 數量欄位
                         ])
                         .map(row => {
-                            // 處理商品標籤欄位
+                            // 處理產地欄位
                             const origin = row[6];
                             let originValue = '';
-                            if (origin.includes('大陸') || origin.includes('中國')) {
+                            if (origin.includes('大陸') || origin.includes('中國') || origin.toLowerCase().includes('china')) {
                                 originValue = '中國';
-                            } else if (origin.includes('台灣')) {
+                            } else if (origin.includes('台灣') || origin.toLowerCase().includes('taiwan')) {
                                 originValue = '台灣';
                             } else if (origin.includes('usale') || origin.includes('不需更動')) {
                                 originValue = '照usale不需更動';
@@ -899,7 +895,7 @@
             const wb = XLSX.utils.book_new();
             
             const exampleData = [
-                ["商品名稱", "樣式", "尺寸", "商品編號", "品名補充", "商品中標備註", "商品標籤", "數量"],
+                ["商品名稱", "樣式", "尺寸", "商品編號", "品名補充", "商品中標備註", "產地", "數量"],
                 ["測試商品A", "黑色", "S", "TEST001", "這是品名補充A", "商品中標備註A", "不需更動", "5"],
                 ["測試商品B", "白色", "M", "TEST002", "這是品名補充B", "商品中標備註B", "不需更動", "3"],
                 ["商品名稱可以很長很長很長", "藍色", "L", "TEST003", "", "商品中標備註C", "不需更動", "1"],
@@ -915,7 +911,7 @@
                 {wch: 15},  // 商品編號欄寬
                 {wch: 30},  // 備註欄寬
                 {wch: 30},  // 規格備注欄寬
-                {wch: 15},  // 商品標籤欄寬
+                {wch: 15},  // 產地欄寬
                 {wch: 10}   // 數量欄寬
             ];
             ws['!cols'] = wscols;
@@ -1457,8 +1453,7 @@
             selected.forEach(p => {
                 const { box, svg } = createLabelElement(
                     [p.name, p.style, p.size, p.note].filter(Boolean).join(' - '),
-                    p.id,
-                    p.origin
+                    p.id
                 );
                 box.dataset.quantity = '1';
                 
@@ -1499,7 +1494,7 @@
         function downloadProductDatabaseTemplate() {
             const wb = XLSX.utils.book_new();
             const exampleData = [
-                ["商品名稱", "廠商名稱", "樣式", "尺寸", "商品編號", "品名補充", "商品中標備註", "商品標籤"],
+                ["商品名稱", "廠商名稱", "樣式", "尺寸", "商品編號", "品名補充", "商品中標備註", "產地"],
                 ["商品A", "廠商甲", "紅色", "L", "PROD001", "這是品名補充A", "商品中標備註A", "中國"],
                 ["商品B", "廠商乙", "藍色", "M", "PROD002", "這是品名補充B", "商品中標備註B", "台灣"],
                 ["商品C", "廠商甲", "綠色", "S", "PROD003", "", "商品中標備註C", "照usale不需更動"],
@@ -1514,7 +1509,7 @@
                 {wch: 15},  // 商品編號
                 {wch: 20},  // 備註
                 {wch: 20},  // 規格備注
-                {wch: 15}   // 商品標籤
+                {wch: 15}   // 產地
             ];
             ws['!cols'] = wscols;
             XLSX.utils.book_append_sheet(wb, ws, "商品資料範本");
@@ -1542,19 +1537,19 @@
                             const columns = row.split(',');
                             // 處理規格備注欄位，將 \n 轉換為 <br>
                             const specNote = columns[6] ? columns[6].replace(/\n/g, '<br>') : '';
-                            // 處理商品標籤欄位
+                            // 處理產地欄位
                             const origin = columns[7] ? columns[7].trim() : '';
                             let originValue = '';
-                            if (origin.includes('大陸') || origin.includes('中國')) {
+                            if (origin.includes('大陸') || origin.includes('中國') || origin.toLowerCase().includes('china')) {
                                 originValue = '中國';
-                            } else if (origin.includes('台灣')) {
+                            } else if (origin.includes('台灣') || origin.toLowerCase().includes('taiwan')) {
                                 originValue = '台灣';
                             } else if (origin.includes('usale') || origin.includes('不需更動')) {
                                 originValue = '照usale不需更動';
                             } else {
                                 originValue = origin; // 保留原始值
                             }
-                            return [columns[0], columns[1], columns[2], columns[3], columns[4], columns[5], specNote, originValue]; // 取八列，包含商品標籤
+                            return [columns[0], columns[1], columns[2], columns[3], columns[4], columns[5], specNote, originValue]; // 取八列，包含產地
                         })
                         .filter(row => row[0] && row[4]); // 確保至少有商品名稱和編號
                 } else if (file.name.toLowerCase().endsWith('.xlsx') || file.name.toLowerCase().endsWith('.xls')) {
@@ -1573,15 +1568,15 @@
                             String(row[4] || '').trim(),
                             String(row[5] || '').trim(),
                             String(row[6] || '').trim().replace(/\n/g, '<br>'),  // 規格備注欄位，將 \n 轉換為 <br>
-                            String(row[7] || '').trim()  // 商品標籤欄位
+                            String(row[7] || '').trim()  // 產地欄位
                         ])
                         .map(row => {
-                            // 處理商品標籤欄位
+                            // 處理產地欄位
                             const origin = row[7];
                             let originValue = '';
-                            if (origin.includes('大陸') || origin.includes('中國')) {
+                            if (origin.includes('大陸') || origin.includes('中國') || origin.toLowerCase().includes('china')) {
                                 originValue = '中國';
-                            } else if (origin.includes('台灣')) {
+                            } else if (origin.includes('台灣') || origin.toLowerCase().includes('taiwan')) {
                                 originValue = '台灣';
                             } else if (origin.includes('usale') || origin.includes('不需更動')) {
                                 originValue = '照usale不需更動';
