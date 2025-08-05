@@ -1136,7 +1136,7 @@
                 const pdf = new jsPDF({
                     orientation: 'landscape',
                     unit: 'mm',
-                    format: [80, 100],
+                    format: [100, 80],
                     hotfixes: ["px_scaling"]
                 });
 
@@ -1186,7 +1186,7 @@
                     for (let j = 0; j < quantity; j++) {
                         // 如果不是第一頁，添加新頁面
                         if (pageCount > 0) {
-                            pdf.addPage([80, 100], 'landscape');
+                            pdf.addPage([100, 80], 'landscape');
                         }
 
                         // 添加圖片到 PDF
@@ -1195,8 +1195,8 @@
                             'PNG',
                             0,
                             0,
-                            80,
                             100,
+                            80,
                             undefined,
                             'NONE'
                         );
