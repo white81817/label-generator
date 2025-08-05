@@ -294,19 +294,10 @@
             contentContainer.style.right = "5mm";
             contentContainer.style.bottom = "5mm";
             contentContainer.style.display = "flex";
-            contentContainer.style.flexDirection = "row";
-            contentContainer.style.justifyContent = "space-between";
+            contentContainer.style.flexDirection = "column";
+            contentContainer.style.justifyContent = "flex-start";
             contentContainer.style.alignItems = "flex-start";
             contentContainer.style.backgroundColor = "transparent";
-
-            // 左側：公司資訊容器
-            const leftContainer = document.createElement("div");
-            leftContainer.style.display = "flex";
-            leftContainer.style.flexDirection = "column";
-            leftContainer.style.justifyContent = "flex-start";
-            leftContainer.style.alignItems = "flex-start";
-            leftContainer.style.width = "45%";
-            leftContainer.style.backgroundColor = "transparent";
 
             // 公司資訊
             const companyInfoDiv = document.createElement("div");
@@ -325,17 +316,6 @@
                 公司地址：新北市五股區五權五路15號6樓<br>
                 商品標籤：${origin || ''}
             `;
-            
-            leftContainer.appendChild(companyInfoDiv);
-
-            // 右側：商品資訊容器
-            const rightContainer = document.createElement("div");
-            rightContainer.style.display = "flex";
-            rightContainer.style.flexDirection = "column";
-            rightContainer.style.justifyContent = "flex-start";
-            rightContainer.style.alignItems = "flex-start";
-            rightContainer.style.width = "50%";
-            rightContainer.style.backgroundColor = "transparent";
 
             // 1. 商品名稱
             const nameDiv = document.createElement("div");
@@ -381,12 +361,10 @@
             specNoteDiv.style.backgroundColor = "transparent";
             specNoteDiv.innerHTML = (specNote || "").replace(/<br>/gi, '<br>');
 
-            rightContainer.appendChild(nameDiv);
-            rightContainer.appendChild(styleSizeDiv);
-            rightContainer.appendChild(specNoteDiv);
-
-            contentContainer.appendChild(leftContainer);
-            contentContainer.appendChild(rightContainer);
+            contentContainer.appendChild(companyInfoDiv);
+            contentContainer.appendChild(nameDiv);
+            contentContainer.appendChild(styleSizeDiv);
+            contentContainer.appendChild(specNoteDiv);
             
             // 添加條碼容器
             if (id) {
@@ -401,8 +379,6 @@
                 barcodeContainer.style.justifyContent = "flex-end";
                 barcodeContainer.style.alignItems = "center";
                 barcodeContainer.style.backgroundColor = "transparent";
-
-
 
                 // 條碼外層容器
                 const barcodeWrapper = document.createElement("div");
